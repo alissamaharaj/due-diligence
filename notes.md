@@ -71,3 +71,21 @@ To answer these, three charts will be generated:
 
 Next, I created the [assets.csv](https://github.com/alissamaharaj/due-diligence/blob/main/data/assets.csv) with the data for the `Assets` table. It includes clean and bad rows, including blank fields, deviations from ISO date standard, duplicate IDs, invalid status options, and non-existent linked assets. The expected output table should look like this.
 <img width="646" height="371" alt="Screenshot 2026-10-21 141003" src="https://github.com/user-attachments/assets/2615adf3-ac7f-4084-ae30-8512d0b79240" />
+
+Then I did the same for the `Procedures`, `Frequencies`, and `Service History` tables.
+The expected output tables should look like these:
+
+Procedures
+
+<img width="373" height="368" alt="Screenshot 2026-10-21 174034" src="https://github.com/user-attachments/assets/ebf37722-2901-4cac-9488-72c47b462f55" />
+<img width="374" height="116" alt="Screenshot 2026-10-21 174113" src="https://github.com/user-attachments/assets/e7d7c265-1a06-4629-8125-daae6bd0a8e4" />
+
+Frequencies
+
+<img width="236" height="141" alt="Screenshot 2026-10-21 174133" src="https://github.com/user-attachments/assets/350a3b33-01b1-484b-9eb6-8edc3b97141b" />
+
+Service History
+
+<img width="418" height="371" alt="Screenshot 2026-10-21 174153" src="https://github.com/user-attachments/assets/246e663f-2253-4196-9450-2e02937cf752" />
+<img width="416" height="139" alt="Screenshot 2026-10-21 174203" src="https://github.com/user-attachments/assets/741c363f-cd33-43d0-adaf-2fdcbd759daf" />
+
