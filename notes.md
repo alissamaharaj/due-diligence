@@ -20,6 +20,8 @@ To define service intervals, it must be considered that service for industrial a
   - `HVC` - inspection (weekly), filter service (monthly), line service (quarterly), overhaul (annual)
   - `BLR` - inspection (weekly), sample water (monthly), trip interlocks (quarterly), overhaul (annual)
 
+Defining service intervals in days, weekly = 7, monthly = 30, quarterly = 90, and annually = 365.
+
 Next, I sketched out the tables that would make up the database; these are the `Assets`, `Procedures`, and `Service History` tables
 
 **Assets**
@@ -33,6 +35,14 @@ Next, I sketched out the tables that would make up the database; these are the `
 |  |  |  |  |  |
 
 **Service History**
-| Record ID | Procedure ID | Date Completed | Status |
-| :--- | :--- | :--- | :--- |
-|  |  |  |  |
+| Record ID | Procedure ID | Asset ID | Date Completed | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+|  |  |  |  |  |
+
+Planning the query parameters for the system:
+  - How many of each asset type?
+  - What is due next?
+  - What is overdue?
+  - What is due in x number of days?
+  - Where are the most overdue items?
+  - Service history for individual items
