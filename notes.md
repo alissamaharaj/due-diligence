@@ -69,3 +69,5 @@ To answer these, three charts will be generated:
   - Overdue procedures by location
   - Services completed by month
 
+Next, I created the [assets.csv](https://github.com/alissamaharaj/due-diligence/blob/main/data/assets.csv) with the data for the `Assets` table. It includes clean and bad rows. The expected output table should look like this.
+<img width="646" height="371" alt="Screenshot 2026-10-21 141003" src="https://github.com/user-attachments/assets/2615adf3-ac7f-4084-ae30-8512d0b79240" />
