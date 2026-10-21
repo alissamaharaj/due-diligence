@@ -12,7 +12,7 @@ ID formats for each asset will follow `XXX-000` structure:
   - `HVC` - HVAC units
   - `BLR` - boilers
 
-To define service intervals, it must be considered that service for industrial assets usually entails multiple procedures scheduled at differing intervals rather than service being a single event at regular intervals. To avoid unnecessary complexity, I decided to pick a few procedures per asset type and restrict it to weekly, monthly, quarterly, and annual service periods.
+To define service intervals, it must be considered that service for industrial assets usually entails multiple procedures scheduled at differing intervals rather than service being a single event at regular intervals. To avoid unnecessary complexity, I decided to pick a few procedures per asset type based on researching typical maintenance procedures carried out for each and restrict it to weekly, monthly, quarterly, and annual service periods.
   - `MTR` - inspection (weekly), bearing lubrication (monthly), alignment (quarterly), overhaul (annual)
   - `PMP` - inspection (weekly), vibration analysis (monthly), calibration (quarterly), overhaul (annual)
   - `GEN` - inspection (weekly), belt service (monthly), coolant replacement (quarterly), overhaul (annual)
