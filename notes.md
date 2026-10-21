@@ -61,6 +61,7 @@ Planning the query parameters for the system:
   - What is overdue?
   - What is due in x number of days?
   - Where are the most overdue items?
+  - What assets are linked?
   - Service history for individual items
 
 To answer these, three charts will be generated:
