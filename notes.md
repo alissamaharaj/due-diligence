@@ -20,4 +20,19 @@ To define service intervals, it must be considered that service for industrial a
   - `HVC` - inspection (weekly), filter service (monthly), line service (quarterly), overhaul (annual)
   - `BLR` - inspection (weekly), sample water (monthly), trip interlocks (quarterly), overhaul (annual)
 
+Next, I sketched out the tables that would make up the database; these are the `Assets`, `Procedures`, and `Service History` tables
 
+**Assets**
+| ID | Type | Description | Location | Commissioning Date | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+|  |  |  |  |  |  |
+
+**Procedures**
+| Procedure ID | Asset ID | Description | Service Interval (days) | Last Service Date |
+| :--- | :--- | :--- | :--- | :--- |
+|  |  |  |  |  |
+
+**Service History**
+| Record ID | Procedure ID | Date Completed | Status |
+| :--- | :--- | :--- | :--- |
+|  |  |  |  |
