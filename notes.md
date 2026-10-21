@@ -14,9 +14,9 @@ ID formats for each asset will follow `XXX-000` structure:
 
 To define service intervals, it must be considered that service for industrial assets usually entails multiple procedures scheduled at differing intervals rather than service being a single event at regular intervals. To avoid unnecessary complexity, I decided to pick a few procedures per asset type based on researching typical maintenance procedures carried out for each and restrict it to weekly, monthly, quarterly, and annual service periods.
   - `MTR` - inspection (weekly), bearing lubrication (monthly), alignment (quarterly), overhaul (annual)
-  - `PMP` - inspection (weekly), vibration analysis (monthly), calibration (quarterly), overhaul (annual)
+  - `PMP` - inspection (weekly), vibration analysis (monthly), instrument calibration (quarterly), overhaul (annual)
   - `GEN` - inspection (weekly), belt service (monthly), coolant replacement (quarterly), overhaul (annual)
-  - `TRN` - inspection (weekly), brush service (monthly), thermal scan (quarterly), overhaul (annual)
+  - `TRN` - inspection (weekly), oil level (monthly), thermal scan (quarterly), overhaul (annual)
   - `HVC` - inspection (weekly), filter service (monthly), line service (quarterly), overhaul (annual)
   - `BLR` - inspection (weekly), sample water (monthly), trip interlocks (quarterly), overhaul (annual)
 
@@ -29,15 +29,27 @@ Next, I sketched out the tables that would make up the database; these are the `
 | :--- | :--- | :--- | :--- | :--- | :--- |
 |  |  |  |  |  |  |
 
+Status values: `Active`, `Under Repair`, `Decommissioned`
+
 **Procedures**
-| Procedure ID | Asset ID | Description | Service Interval (days) | Last Service Date |
-| :--- | :--- | :--- | :--- | :--- |
-|  |  |  |  |  |
+| Procedure ID | Asset ID | Description | Service Frequency |
+| :--- | :--- | :--- | :--- |
+|  |  |  |  |
+
+Service frequency will be listed as weekly, monthly, quarterly, or annually; to have the interval in days available for querying purposes rhis small linked lookup table will be used.
+
+**Frequencies**
+| Service Frequency | Service Interval (days) |
+| :--- | :--- |
+| weekly | 7 |
+| monthly | 30 |
+| quarterly | 90 |
+| annually | 365 |
 
 **Service History**
-| Record ID | Procedure ID | Asset ID | Date Completed | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-|  |  |  |  |  |
+| Record ID | Procedure ID | Date Completed | Notes |
+| :--- | :--- | :--- | :--- |
+|  |  |  |  |
 
 Planning the query parameters for the system:
   - How many of each asset type?
@@ -46,3 +58,8 @@ Planning the query parameters for the system:
   - What is due in x number of days?
   - Where are the most overdue items?
   - Service history for individual items
+
+To answer these, three charts will be generated:
+  - Overdue procedures by asset type
+  - Overdue procedures by location
+  - Services completed by month
