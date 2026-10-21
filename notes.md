@@ -29,12 +29,14 @@ Next, I sketched out the tables that would make up the database; these are the `
 | :--- | :--- | :--- | :--- | :--- | :--- |
 |  |  |  |  |  |  |
 
-Status values: `Active`, `Under Repair`, `Decommissioned`
+Status values: `active`, `under repair`, `decommissioned`
 
 **Procedures**
 | Procedure ID | Asset ID | Description | Service Frequency |
 | :--- | :--- | :--- | :--- |
 |  |  |  |  |
+
+Procedure ID will follow `XXX-000-P0` structure, where `XXX-000` is the Asset ID.
 
 Service frequency will be listed as weekly, monthly, quarterly, or annually; to have the interval in days available for querying purposes rhis small linked lookup table will be used.
 
@@ -63,3 +65,4 @@ To answer these, three charts will be generated:
   - Overdue procedures by asset type
   - Overdue procedures by location
   - Services completed by month
+
