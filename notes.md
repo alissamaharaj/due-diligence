@@ -2,7 +2,7 @@
 
 *21-10-26: The objective of the project is to create a system which tracks equipment and service periods, stores the information in a database, and reports what's approaching or overdue. 
 
-Decided that the system will track traditional industrial assets, including motors, pumps, generators, transformers, HVAC units, and boilers. For each asset, the fields that would need to be defined are its specific ID, type, description, location, commissioning date, service intervals, last serviced date, and status.
+Decided that the system will track traditional industrial assets, including motors, pumps, generators, transformers, HVAC units, and boilers. For each asset, the fields that need to be defined are its specific ID, type, description, location, commissioning date, service intervals, last serviced date, and status.
 
 ID formats for each asset will follow `XXX-000` structure:
   - `MTR` - motors
@@ -69,5 +69,5 @@ To answer these, three charts will be generated:
   - Overdue procedures by location
   - Services completed by month
 
-Next, I created the [assets.csv](https://github.com/alissamaharaj/due-diligence/blob/main/data/assets.csv) with the data for the `Assets` table. It includes clean and bad rows. The expected output table should look like this.
+Next, I created the [assets.csv](https://github.com/alissamaharaj/due-diligence/blob/main/data/assets.csv) with the data for the `Assets` table. It includes clean and bad rows, including blank fields, deviations from ISO date standard, duplicate IDs, invalid status options, and non-existent linked assets. The expected output table should look like this.
 <img width="646" height="371" alt="Screenshot 2026-10-21 141003" src="https://github.com/user-attachments/assets/2615adf3-ac7f-4084-ae30-8512d0b79240" />
