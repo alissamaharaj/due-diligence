@@ -1,0 +1,5 @@
+service_frequency,service_interval_days
+weekly,7
+monthly,30
+quarterly,90
+annually,365

@@ -1,0 +1,16 @@
+procedure_id,asset_id,description,service_frequency
+PMP-001-P1,PMP-001,Pump Inspection,weekly
+PMP-001-P2,PMP-001,Vibration Analysis,monthly
+PMP-001-P3,PMP-001,Instrument Calibration,quarterly
+PMP-001-P4,PMP-001,Pump Overhaul,annually
+MTR-001-P1,MTR-001,Motor Inspection,weekly
+MTR-001-P2,MTR-001,Bearing Lubrication,monthly
+MTR-001-P3,MTR-001,Motor Alignment,quarterly
+MTR-001-P4,MTR-001,Motor Overhaul,annually
+PMP-001-P5,PMP-001,Pump Inspection,weekly
+MTR-002-P1,MTR-001,Motor Inspection,weekly
+PMP-999-P1,PMP-999,Pump Inspection,weekly
+TRN-001-P1,TRN-001,Transformer Inspection,weeklly
+TRN-001-P2,TRN-001,Oil Level Check,weekly
+PMP-001-P1,PMP-001,Pump Inspection,weekly
+TRN-001-P3,TRN-001,,quarterly
