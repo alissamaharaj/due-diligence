@@ -25,9 +25,11 @@ Defining service intervals in days, weekly = 7, monthly = 30, quarterly = 90, an
 Next, I sketched out the tables that would make up the database; these are the `Assets`, `Procedures`, and `Service History` tables
 
 **Assets**
-| ID | Type | Description | Location | Commissioning Date | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-|  |  |  |  |  |  |
+| ID | Type | Description | Location | Commissioning Date | Status | Linked Asset ID |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+|  |  |  |  |  |  |  |
+
+Linked assets are those that drive or are driven by each other; for example, pump and motor pairs.
 
 Status values: `active`, `under repair`, `decommissioned`
 
@@ -38,7 +40,7 @@ Status values: `active`, `under repair`, `decommissioned`
 
 Procedure ID will follow `XXX-000-P0` structure, where `XXX-000` is the Asset ID.
 
-Service frequency will be listed as weekly, monthly, quarterly, or annually; to have the interval in days available for querying purposes rhis small linked lookup table will be used.
+Service frequency will be listed as weekly, monthly, quarterly, or annually; to have the interval in days available for querying purposes, this small linked lookup table will be used.
 
 **Frequencies**
 | Service Frequency | Service Interval (days) |
