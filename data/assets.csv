@@ -1,5 +1,5 @@
 asset_id,type,description,location,commissioning_date,status,linked_asset_id
-PMP-001,pump,Feedwater Pump,Boiler Room,2020-01-15,active,
+PMP-001,pump,Feedwater Pump,Boiler Room,2020-01-15,active,MTR-001
 PMP-002,pump,Cooling Water Pump,Pump Room 1,2022-07-08,under repair,
 MTR-001,motor,Feedwater Pump Motor,Boiler Room,2020-01-15,active,PMP-001
 GEN-001,generator,Diesel Generator,Generator Room,2019-05-20,active,
@@ -12,3 +12,5 @@ PMP-001,pump,Duplicate Feedwater Pump,Boiler Room,2022-02-01,active,
 GEN-002,generator,Backup Generator,Generator Room,2020-12-10,broken,
 MTR-003,motor,Spare Motor,Pump Room 2,2021-11-15,active,PMP-999
 PMP-004,motor,Transfer Pump,Pump Room 1,2021-06-10,active,
+MTR-004,motor,Spare Motor,Generator Room,2021-03-03,active,GEN-001
+MTR-005,motor,Booster Motor,Pump Room 1,2022-07-08,active,PMP-002
