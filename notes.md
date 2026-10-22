@@ -1,6 +1,6 @@
 **START**
 
-*21-10-26: The objective of the project is to create a system which tracks equipment and service periods, stores the information in a database, and reports what's approaching or overdue. 
+*2026-10-21: The objective of the project is to create a system which tracks equipment and service periods, stores the information in a database, and reports what's approaching or overdue. 
 
 Decided that the system will track traditional industrial assets, including motors, pumps, generators, transformers, HVAC units, and boilers. For each asset, the fields that need to be defined are its specific ID, type, description, location, commissioning date, service intervals, last serviced date, and status.
 
@@ -93,5 +93,28 @@ Next, I created the [loaders](https://github.com/alissamaharaj/due-diligence/blo
 
 I used notebooks for the first time to build this and had some struggles figuring out kernel configuration and such; I couldn't get it to run the code cells. It turns out I just needed to refresh the notebook after installing the kernel properly. 
 
-Once I got that working, it was onto the fun part of building the loader. The next hitch I ran into was getting the file path to work since notebooks run from the `notebooks/` folder, so I had to learn the correct notation to direct the file path. `../data/frequencies.csv`. When that was done, I wrote the rest of the code. `load_frequencies()` reads the file into a dictionary, converting the service intervals from strings to integers, and gives this sample output: `{'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365}`
+Once I got that working, it was onto the fun part of building the loader. The next hitch I ran into was getting the file path to work since notebooks run from the `notebooks/` folder, so I had to learn the correct notation to direct the file path. `../data/frequencies.csv`. When that was done, I wrote the rest of the code. `load_frequencies()` reads the file into a dictionary, converting the service intervals from strings to integers, and gives this sample output: `{'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365}`. This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/01-load-frequencies.ipynb) used.
 
+*2026-10-22: Next, I created the loader for the `assets.csv`. This one was significantly more complex, so it took a lot of trial and error. I needed it to not only load the file and read it into a dictionary, but also to parse the data, differentiate between the clean lines and the bad ones, and sort them into two lists based on one reason for failure per row; the criteria were:
+  - blank fields
+  - invalid commissioning_date
+  - invalid status
+  - type does not match id_type
+  - duplicate asset_id
+
+Firstly, I included a block to look through the information fields using a list to name them (excluding linked_asset_id), and identify the row as bad if any of the other fields' values contained only blank spaces. Then, a block to convert the commissioning_date string into a datetime object in the ISO date format `YYYY-MM-DD`; if the commissioning_date is in an invalid format, this would return a `ValueError` and then identify the row as bad. After that, a block to pick out invalid status values by comparing them to a list of `VALID_STATUS` values. To identify non-matching asset_id and type fields, I needed to split the asset_id and use the prefix to match to a preset list of `prefix:type` pairs; if they did not match, the row was identified as bad once again. Lastly, duplicate asset_id values were identified by adding the asset_id values to a set as they were looped through; the asset_id values were only added to the set if they were not already present; if it was already present, this identified the row as bad. The checks were ordered this way so that the first failure is the one recorded and that each row is allowed only one failure.
+
+Some issues I had while building this part: there was an instance of a stray comma turning an assignment statement into an accidental tuple, and a bigger issue I had was the final lists having way too many values in them, which took me a while to realize was because my append lines were within a loop, which was causing the lists to have values committed individually instead of by row.
+
+The identified clean rows were added to a good rows list, and the bad rows were added to a rejected rows list, along with the row number (relative to the header row being 1) and the reason for the row failing, indicated by a string explanation.
+
+The sample output of this is `8 good rows
+5 rejected rows
+rejected lines:
+9
+10
+11
+12
+14`.
+
+This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/02-load-assets.ipynb) used.
