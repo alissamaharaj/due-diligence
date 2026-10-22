@@ -89,3 +89,9 @@ Service History
 <img width="418" height="371" alt="Screenshot 2026-10-21 174153" src="https://github.com/user-attachments/assets/246e663f-2253-4196-9450-2e02937cf752" />
 <img width="416" height="139" alt="Screenshot 2026-10-21 174203" src="https://github.com/user-attachments/assets/741c363f-cd33-43d0-adaf-2fdcbd759daf" />
 
+Next, I created the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) for the `.csv` files, starting with `frequencies.csv`. 
+
+I used notebooks for the first time to build this and had some struggles figuring out kernel configuration and such; I couldn't get it to run the code cells. It turns out I just needed to refresh the notebook after installing the kernel properly. 
+
+Once I got that working, it was onto the fun part of building the loader. The next hitch I ran into was getting the file path to work since notebooks run from the `notebooks/` folder, so I had to learn the correct notation to direct the file path. `../data/frequencies.csv`. When that was done, I wrote the rest of the code. `load_frequencies()` reads the file into a dictionary, converting the service intervals from strings to integers, and gives this sample output: `{'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365}`
+
