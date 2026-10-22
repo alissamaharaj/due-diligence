@@ -11,3 +11,4 @@ PMP-003,pump,Booster Pump,Pump Room 2,15/03/2021,active,
 PMP-001,pump,Duplicate Feedwater Pump,Boiler Room,2022-02-01,active,
 GEN-002,generator,Backup Generator,Generator Room,2020-12-10,broken,
 MTR-003,motor,Spare Motor,Pump Room 2,2021-11-15,active,PMP-999
+PMP-004,motor,Transfer Pump,Pump Room 1,2021-06-10,active,
