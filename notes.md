@@ -118,3 +118,24 @@ rejected lines:
 14`.
 
 This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/02-load-assets.ipynb) used.
+
+Next was the second pass through this code to introduce checks on the linked_asset_id column, since it was excluded from the first pass as it could constitute a bad row for more than one failure. This included assigning the row to the rejected rows if:
+  - the linked asset_id does not exist
+  - the linked asset was not part of a `pump:motor` (vice versa) pair
+  - the linked asset's linked asset_id did not point back to the original row
+
+I chose to include that linked assets are stored on both sides, not one, to avoid having an additional lookup step if only one asset is checked.
+
+`PMP-001`'s linked asset was set to `MTR-001` so that the pair was reciprocated and some new lines were also added to the asset.csv to exercise these rules.
+
+The sample output after these updates is this `7 good rows
+8 rejected rows
+rejected rows:
+9 blank location
+10 invalid commissioning_date
+11 duplicate asset_id
+12 invalid status
+13 linked asset not found
+14 type does not match id_type
+15 link must pair a motor and a pump
+16 link not reciprocated`
