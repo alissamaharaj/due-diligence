@@ -139,3 +139,5 @@ rejected rows:
 14 type does not match id_type
 15 link must pair a motor and a pump
 16 link not reciprocated`
+
+The `load_assets()` function was moved to the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file, alongside the `load_frequencies()` function and returns the good and rejected rows.
