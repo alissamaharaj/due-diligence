@@ -38,7 +38,7 @@ Status values: `active`, `under repair`, `decommissioned`
 | :--- | :--- | :--- | :--- |
 |  |  |  |  |
 
-Procedure ID will follow `XXX-000-P0` structure, where `XXX-000` is the Asset ID.
+Procedure ID will follow `XXX-000-P0` structure, where `XXX-000` is the Asset ID and `P0` is the Procedure tag.
 
 Service frequency will be listed as weekly, monthly, quarterly, or annually; to have the interval in days available for querying purposes, this small linked lookup table will be used.
 
@@ -128,7 +128,7 @@ I chose to include that linked assets are stored on both sides, not one, to avoi
 
 `PMP-001`'s linked asset was set to `MTR-001` so that the pair was reciprocated and some new lines were also added to the asset.csv to exercise these rules.
 
-The sample output after these updates is this `7 good rows
+The sample output after these updates is: 7 good rows
 8 rejected rows
 rejected rows:
 9 blank location
@@ -140,4 +140,31 @@ rejected rows:
 15 link must pair a motor and a pump
 16 link not reciprocated`
 
-The `load_assets()` function was moved to the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file, alongside the `load_frequencies()` function and returns the good and rejected rows.
+The `load_assets()` function was moved to the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file, alongside the `load_frequencies()` function, and returns the good and rejected rows.
+
+*2026-10-24: Next was the loader for the `procedures.csv` file. This went a lot faster after having done the asset loader because I could just follow that framework there. The failure criteria for these rows were:
+  - blank fields
+  - invalid procedure tags
+  - procedure_id does not match asset_id
+  - duplicate procedure_ids
+  - asset not found
+  - unknown service_frequency
+  - frequency does not match tag
+
+The blank fields were assessed in the same way as the asset loader; invalid procedure tags were found by comparing again to a list of valid tags; procedure_ids were checked against asset_ids by comparing them to the asset_id plus the procedure tag; duplicate procedure_ids were also assessed in the same way as the asset loader. Asset not found checks were done by comparing asset_ids to the outputs that passed the asset loader checks, so a procedure for an asset that failed the asset loader checks also fails; unknown service_frequency was checked by comparing to the frequency loader output, and expected tag interval was compared to the frequency loader interval output. 
+
+I initially defined the valid tags as `VALID_SLOT` at the top of the function but replaced it with a line defining the expected tag intervals in `SLOT_DAYS` so that the line could serve two purposes by providing the valid tags in the form of the dictionary keys and the expected tag intervals as the values, so both checks use one line of given information.
+
+The sample output is as follows: `8 good rows
+7 rejected rows
+10 invalid procedure tag
+11 procedure_id does not match asset_id
+12 asset not found
+13 unknown service_frequency
+14 frequency does not match tag
+15 duplicate procedure_id
+16 blank description`
+
+This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/03-load-procedures.ipynb) used.
+
+The `load_procedures()` function was moved to the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file, alongside the other loader functions, and, again, the final clean and rejected rows were appended to the respective lists, and the function returns those values. The argument of this function, unlike the others is not just `path`, it is `path, valid_asset_ids, frequencies` where `valid_asset_ids` is the output of the asset loader, and `frequencies` is the output of the frequency loader, since the function used both of those.
