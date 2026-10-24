@@ -138,3 +138,56 @@ def load_procedures(path, valid_asset_ids, frequencies):
 
     rejected.sort()
     return good, rejected
+
+serv_hist_fields = ['record_id','procedure_id','date_completed']
+
+def load_service_history(path, procedure_commissioning, today):
+    record_ids = set()
+    good = list()
+    rejected = list()
+
+    with open(path) as fh:
+        fop = csv.DictReader(fh)
+
+        for row in fop:
+            line_num = fop.line_num
+            reason = None
+            row_good = True
+            done = None
+
+            for col in serv_hist_fields:
+                if row[col].strip() == '':
+                    row_good = False
+                    reason = f'blank {col}'
+                    break
+            if row_good:
+                try: done = datetime.strptime(row['date_completed'], DATE_FMT)
+                except ValueError:
+                    row_good = False
+                    reason = 'invalid date_completed'
+            if row_good:
+                if row['record_id'] in record_ids:
+                    row_good = False
+                    reason = 'duplicate record_id'
+            if row_good:
+                if row['procedure_id'] not in  procedure_commissioning:
+                    row_good = False
+                    reason = 'procedure not found'
+            if row_good:
+                if done > today:
+                    row_good = False
+                    reason = 'future date_completed'
+            if row_good:
+                if done < procedure_commissioning[row['procedure_id']]:
+                    row_good = False
+                    reason = 'date_completed before commissioning'
+
+            if row_good:
+                record_ids.add(row['record_id'])
+                if row['notes'].strip() == '':
+                    row['notes'] = None
+                good.append([line_num,row])
+            else: rejected.append([line_num,reason,row])
+
+    rejected.sort()
+    return good, rejected
