@@ -83,3 +83,58 @@ def load_assets(path):
 
     rejected.sort()
     return surv_good, rejected
+
+proc_fields = ['procedure_id','asset_id','description','service_frequency']
+SLOT_DAYS = {'P1': 7, 'P2': 30, 'P3': 90, 'P4': 365}
+
+def load_procedures(path, valid_asset_ids, frequencies):
+    procedure_ids = set()
+    good = list()
+    rejected = list()
+
+    with open(path) as fh:
+        fop = csv.DictReader(fh)
+
+        for row in fop:
+            line_num = fop.line_num
+            reason = None
+            row_good = True
+            slot = row['procedure_id'].split('-')[-1]
+
+            for col in proc_fields:
+                if row[col].strip() == '':
+                    row_good = False
+                    reason = f'blank {col}'
+                    break
+            if row_good:
+                if slot not in SLOT_DAYS:
+                    row_good = False
+                    reason = 'invalid procedure tag'
+            if row_good:
+                if row['procedure_id'] != row['asset_id'] + '-' + slot:
+                    row_good = False
+                    reason = 'procedure_id does not match asset_id'
+            if row_good:
+                if row['procedure_id'] in procedure_ids:
+                    row_good = False
+                    reason = 'duplicate procedure_id'
+            if row_good:
+                if row['asset_id'] not in valid_asset_ids:
+                    row_good = False
+                    reason = 'asset not found'
+            if row_good:
+                if row['service_frequency'] not in frequencies:
+                    row_good = False
+                    reason = 'unknown service_frequency'
+            if row_good:
+                if frequencies[row['service_frequency']] != SLOT_DAYS[slot]:
+                    row_good = False
+                    reason = 'frequency does not match tag'
+
+            if row_good:
+                procedure_ids.add(row['procedure_id'])
+                good.append([line_num,row])
+            else: rejected.append([line_num,reason,row])
+
+    rejected.sort()
+    return good, rejected
