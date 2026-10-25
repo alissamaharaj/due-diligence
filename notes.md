@@ -203,3 +203,12 @@ Some issues I ran into with this stage: I once again accidentally put my accept 
 At this point, all the loaders are complete, finally :), and the only things left for this phase are to write the generator scripts and loader tests, which I will come back to after starting the database work because I need a bit of a break, and I really enjoy databases, so it will be a nice change of pace.
 
 *2026-10-25: At this point, when I had a moment to mentally regroup, I made some design decisions for the process going forward. My original plan was to write a generator script based on the initial .csv files to create larger asset datasets, then use a SQLite database to store and organize the data and also for querying, and then use `matplotlib` in Python to create the reports. I have now decided to scale back the matplotlib element to possibly one chart and shift the rest of the reporting phase to Excel instead, so I can have some solid Excel experience in my portfolio, since for data analytics Excel comes up way more frequently than matplotlib. All other elements will remain the same. I'll decide the specifics when we come back to this at a later point.
+
+Starting the SQLite phase, I created a Frequencies table using `DROP TABLE IF EXISTS` so reruns are safe, defining service_frequency as `TEXT PRIMARY KEY` and service_interval_days as `INTEGER NOT NULL`. The rows were pulled from `load_frequencies` using `executemany` and `?` placeholders. Initially, I had a mistaken `AUTOINCREMENT` for service_frequency, which would cause an error since it's not an integer value. Also, I did not have service_interval_days as `NOT NULL`. After fixing them, I ran two test lines trying to add a duplicate 'weekly' row and a 'daily' row with a `None` service_interval_days to test the `UNIQUE` and `NOT NULL` constraints. The output of those tests was: `UNIQUE constraint failed: Frequencies.service_frequency
+NOT NULL constraint failed: Frequencies.service_interval_days`
+
+This schema is a second line of defense behind the loaders, which already reject bad rows with clear reasons.
+
+The database is in the automatically created `frequencies.sqlite` file, which remains uncommitted since I added a `*.sqlite` line to the `.gitignore`
+
+This is the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/05-sqlite-frequencies.ipynb) used.
