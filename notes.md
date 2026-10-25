@@ -204,7 +204,11 @@ At this point, all the loaders are complete, finally :), and the only things lef
 
 *2026-10-25: At this point, when I had a moment to mentally regroup, I made some design decisions for the process going forward. My original plan was to write a generator script based on the initial .csv files to create larger asset datasets, then use a SQLite database to store and organize the data and also for querying, and then use `matplotlib` in Python to create the reports. I have now decided to scale back the matplotlib element to possibly one chart and shift the rest of the reporting phase to Excel instead, so I can have some solid Excel experience in my portfolio, since for data analytics Excel comes up way more frequently than matplotlib. All other elements will remain the same. I'll decide the specifics when we come back to this at a later point.
 
-Starting the SQLite phase, I created a Frequencies table using `DROP TABLE IF EXISTS` so reruns are safe, defining service_frequency as `TEXT PRIMARY KEY` and service_interval_days as `INTEGER NOT NULL`. The rows were pulled from `load_frequencies` using `executemany` and `?` placeholders. Initially, I had a mistaken `AUTOINCREMENT` for service_frequency, which would cause an error since it's not an integer value. Also, I did not have service_interval_days as `NOT NULL`. After fixing them, I ran two test lines trying to add a duplicate 'weekly' row and a 'daily' row with a `None` service_interval_days to test the `UNIQUE` and `NOT NULL` constraints. The output of those tests was: `UNIQUE constraint failed: Frequencies.service_frequency
+Starting the SQLite phase, I created a Frequencies table using `DROP TABLE IF EXISTS` so reruns are safe, defining service_frequency as `TEXT PRIMARY KEY` and service_interval_days as `INTEGER NOT NULL`. The rows were pulled from `load_frequencies` using `executemany` and `?` placeholders. 
+
+Initially, I had a mistaken `AUTOINCREMENT` for service_frequency, which would cause an error since it's not an integer value. Also, I did not have service_interval_days as `NOT NULL`. 
+
+After fixing them, I ran two test lines trying to add a duplicate 'weekly' row and a 'daily' row with a `None` service_interval_days to test the `UNIQUE` and `NOT NULL` constraints. The output of those tests was: `UNIQUE constraint failed: Frequencies.service_frequency
 NOT NULL constraint failed: Frequencies.service_interval_days`
 
 This schema is a second line of defense behind the loaders, which already reject bad rows with clear reasons.
@@ -212,3 +216,18 @@ This schema is a second line of defense behind the loaders, which already reject
 The database is in the automatically created `frequencies.sqlite` file, which remains uncommitted since I added a `*.sqlite` line to the `.gitignore`
 
 This is the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/05-sqlite-frequencies.ipynb) used.
+
+The Assets SQLite table was next after that. Following the same framework, rows were loaded from `load_assets`; the table was created using `DROP TABLE IF EXISTS`, defining asset_id as `TEXT PRIMARY KEY` and the others as `TEXT NOT NULL`, with the exception of linked_asset_ids, which is allowed to be `NULL`, so it was just defined as `TEXT`. The status column also got some check constraints, `CHECK (status IN ('active', 'under repair', 'decommissioned'))`, to serve as a second line of defense for the loaders again, ensuring only valid statuses are appended to the database table. 
+
+Foreign keys were turned on for each connection since SQLite automatically ignores them otherwise: `PRAGMA foreign_keys = ON`. Because it was now enforcing foreign keys, this resulted in a circular error link due to assets `MTR-001` and `PMP-001` pointing at each other, so whichever row is added first would point to a row that does not yet exist, giving `FOREIGN KEY constraint failed`. This error proves that it was checking for foreign keys. The rows were added using `cur.execute` and `?` placeholders, just as with the previous table.
+
+I had some mess-ups here, like not putting the appropriate commas at the end of the lines defining each column in the `DROP TABLE` BLOCK, accidentally not including the location column of the table, and writing the loop the same way as for the previous table, which treated the loader output as a dictionary instead of lists. I also got a `database is locked` issue when trying to run the code again after the foreign key error because I forgot to restart the kernel.
+
+To fix the foreign key error, I assigned the linked_asset_id values as `None` then added a block before the commit to `UPDATE` the rows and assign all the values once all the rows exist, so it never points to a row that hasn't been added yet. This is similar to the asset loader working in two passes also to accommodate the linked_asset_id linking to other rows.
+
+Then I added the test cell to attempt adding an invalid status to fail the status check and updating an asset_id to one that did not exist to once again fail the foreign key constraint to prove that the checks were functioning. The output of these checks was: `CHECK constraint failed: status IN ('active', 'under repair', 'decommissioned')
+FOREIGN KEY constraint failed.`
+
+The database file here is also covered by .gitignore, so it remains uncommitted.
+
+This is the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/06-sqlite-assets.ipynb) used for this.
