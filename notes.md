@@ -102,7 +102,7 @@ Once I got that working, it was onto the fun part of building the loader. The ne
   - type does not match id_type
   - duplicate asset_id
 
-Firstly, I included a block to look through the information fields using a list to name them (excluding linked_asset_id), and identify the row as bad if any of the other fields' values contained only blank spaces. Then, a block to convert the commissioning_date string into a datetime object in the ISO date format `YYYY-MM-DD`; if the commissioning_date is in an invalid format, this would return a `ValueError` and then identify the row as bad. After that, a block to pick out invalid status values by comparing them to a list of `VALID_STATUS` values. To identify non-matching asset_id and type fields, I needed to split the asset_id and use the prefix to match to a preset list of `prefix:type` pairs; if they did not match, the row was identified as bad once again. Lastly, duplicate asset_id values were identified by adding the asset_id values to a set as they were looped through; the asset_id values were only added to the set if they were not already present; if it was already present, this identified the row as bad. The checks were ordered this way so that the first failure is the one recorded and that each row is allowed only one failure.
+Firstly, I included a block to look through the information fields using a list to name them (excluding linked_asset_id), and identify the row as bad if any of the other fields' values contained only blank spaces. Then, a block to convert the commissioning_date string into a datetime object in the ISO date format `YYYY-MM-DD`, assigned as `DATE_FMT`; if the commissioning_date is in an invalid format, this would return a `ValueError` and then identify the row as bad. After that, a block to pick out invalid status values by comparing them to a list of `VALID_STATUS` values. To identify non-matching asset_id and type fields, I needed to split the asset_id and use the prefix to match to a preset list of `prefix:type` pairs; if they did not match, the row was identified as bad once again. Lastly, duplicate asset_id values were identified by adding the asset_id values to a set as they were looped through; the asset_id values were only added to the set if they were not already present; if it was already present, this identified the row as bad. The checks were ordered this way so that the first failure is the one recorded and that each row is allowed only one failure.
 
 Some issues I had while building this part: there was an instance of a stray comma turning an assignment statement into an accidental tuple, and a bigger issue I had was the final lists having way too many values in them, which took me a while to realize was because my append lines were within a loop, which was causing the lists to have values committed individually instead of by row.
 
@@ -168,3 +168,38 @@ The sample output is as follows: `8 good rows
 This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/03-load-procedures.ipynb) used.
 
 The `load_procedures()` function was moved to the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file, alongside the other loader functions, and, again, the final clean and rejected rows were appended to the respective lists, and the function returns those values. The argument of this function, unlike the others is not just `path`, it is `path, valid_asset_ids, frequencies` where `valid_asset_ids` is the output of the asset loader, and `frequencies` is the output of the frequency loader, since the function used both of those.
+
+After that was the final loader for the `service_history.csv`. Again, following the framework of the previous loaders, the failure criteria for these rows were:
+  - blank fields
+  - invalid date_completed
+  - duplicate record_ids
+  - procedure not found
+  - future date_completed
+  - date_completed before commissioning
+
+Again, the blank fields were assessed in the same way as the other loaders; a block was used to convert the date_completed string into a datetime object in the appropriate `DATE_FMT`; just like with commissioning_date in the assets loader, if date_completed is in an invalid format, this would return a `ValueError` and then identify the row as bad; duplicate record_ids were also assessed in the same way as the other loaders. Procedure not found checks were done in the same manner as the asset not found check in the previous loader; and the future date_completed and date_completed before commissioning checks were done by comparing those datetime values to the assigned datetime values for `today` and `commissioning_date`.
+
+The order of the checks mattered here: date_completed had to parse into a valid datetime first, the value is kept as `done` for future use, and the procedure had to be verified before its commissioning date could be looked up.
+
+I decided to include a set datetime parameter for `today` (2026-10-21) for testing purposes; this will be changed later in the process to have a live `today` value.
+
+Similar to the `SLOT_DAYS` in the last loader, I initially defined the procedure_ids for the procedure_id check but replaced it with a procedure_commissioning dictionary that could again serve two purposes: the keys give the procedure_ids for that check, and the values give the commissioning_dates.
+
+As with the `linked_asset_id` column in the assets table, the notes column in the service history table is also an 'optional' column. For these, if blank, they are assigned a `None` value, since it is valid for them to be blank, unlike all other required columns.
+
+In the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/04-load-service-history.ipynb), to ensure all the required data was fed to the function, I had to chain the loaders together; frequencies and valid assets feed the procedures loader; the procedures plus asset commissioning dates are combined into procedure_commissioning, which feeds the service history loader.
+
+The sample output is as follows: `10 good rows
+6 rejected rows
+12 procedure not found
+13 invalid date_completed
+14 future date_completed
+15 duplicate record_id
+16 date_completed before commissioning
+17 blank date_completed`
+
+Some issues I ran into with this stage: I once again accidentally put my accept lines into the loop, resulting in inflated row numbers. I messed up on using `strptime` by attempting to write a `datetime.strptime()` line and then calling it in a subsequent line. I switched in this phase from building in notebooks and copy-pasting over to the [loader](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file because I wanted to avoid possible indentation errors, which are difficult to debug when copy-pasting, but navigating this switch came with some hitches as I ran into `NameError`s and had to learn that everything has to be defined or imported before testing from outside the notebook since each notebook has its own memory, so the ease of testing is traded off for avoiding tedious indentation debugging, which I think is worth it because the testing by saving the file and restarting the kernel is still less of a hassle than manually rechecking every line indent.
+
+At this point, all the loaders are complete, finally :), and the only things left for this phase are to write the generator scripts and loader tests, which I will come back to after starting the database work because I need a bit of a break, and I really enjoy databases, so it will be a nice change of pace.
+
+*2026-10-25: At this point, when I had a moment to mentally regroup, I made some design decisions for the process going forward. My original plan was to write a generator script based on the initial .csv files to create larger asset datasets, then use a SQLite database to store and organize the data and also for querying, and then use `matplotlib` in Python to create the reports. I have now decided to scale back the matplotlib element to possibly one chart and shift the rest of the reporting phase to Excel instead, so I can have some solid Excel experience in my portfolio, since for data analytics Excel comes up way more frequently than matplotlib. All other elements will remain the same. I'll decide the specifics when we come back to this at a later point.
