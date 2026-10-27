@@ -223,7 +223,7 @@ Foreign keys were turned on for each connection since SQLite automatically ignor
 
 I had some mess-ups here, like not putting the appropriate commas at the end of the lines defining each column in the `DROP TABLE` BLOCK, accidentally not including the location column of the table, and writing the loop the same way as for the previous table, which treated the loader output as a dictionary instead of lists. I also got a `database is locked` issue when trying to run the code again after the foreign key error because I forgot to restart the kernel.
 
-To fix the foreign key error, I assigned the linked_asset_id values as `None` then added a block before the commit to `UPDATE` the rows and assign all the values once all the rows exist, so it never points to a row that hasn't been added yet. This is similar to the asset loader working in two passes also to accommodate the linked_asset_id linking to other rows.
+To fix the foreign key error, I assigned the linked_asset_id values as `None`, then added a block before the commit to `UPDATE` the rows and assign all the values once all the rows exist, so it never points to a row that hasn't been added yet. This is similar to the asset loader working in two passes also to accommodate the linked_asset_id linking to other rows.
 
 Then I added the test cell to attempt adding an invalid status to fail the status check and updating an asset_id to one that did not exist to once again fail the foreign key constraint to prove that the checks were functioning. The output of these checks was: `CHECK constraint failed: status IN ('active', 'under repair', 'decommissioned')
 FOREIGN KEY constraint failed.`
@@ -231,3 +231,22 @@ FOREIGN KEY constraint failed.`
 The database file here is also covered by .gitignore, so it remains uncommitted.
 
 This is the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/06-sqlite-assets.ipynb) used for this.
+
+*2026-10-26: Moving forward, I decided to create one big file, [storage.py](https://github.com/alissamaharaj/due-diligence/blob/main/src/storage.py), that connects each data loader to a single database location, instead of having each file create its own database at its location. The file path `DB_PATH = Path(__file__).resolve().parent.parent / 'data' / 'maintenance.sqlite'` was defined as the database location. The file also holds the entire database-building script, including building the tables and inserting the data. Creating this file path solves the issue so the scripts work no matter which folder the code is launched from and prevents SQLite from creating new empty databases in the wrong folder if the file path doesn't resolve.
+
+`get_conn()` then connects to `DB_PATH`, activates foreign keys, and returns the connection.
+Issues I ran into here were attempting to connect to a bare filename instead of the correct path and forgetting to include the return.
+
+For the .csv path, the already created `DB_PATH` was derived as `DATA_DIR = DB_PATH.parent`.
+
+`create_freq` and `create_assets` were moved from notebooks using `executescript`; `create_proc` and `create_history` were built from scratch directly in the storage file using the existing two as templates. The `DROP TABLE` lines were removed from the individual functions and included in the `build_database()` one instead, since the drop orders rely on how the tables relate to each other, and this function sees all four tables. Drops go children first, and creates go parents first. The hitch for me here was using commas between DROP TABLE lines instead of semicolons.
+
+Then the insert functions for the good rows from each loader were built. `insert_assets` follows the same two-pass approach by inserting all the linked_asset_ids as `None`, then updating them on a second pass. I had some issues with `insert_proc` because of the arguments required for the `load_procedures` function, so I had to define those arguments `(valid_asset_ids, frequencies)` in the setup lines before I could call it. `insert_history` was the same but even more complex and required more setup lines to identify the data the function needed passed into it to run (data from `load_procedures` and `procedure_commissioning, today`, which also meant including datetime values instead of strings). In `insert_history`, the loader notebook still uses the fixed date, so for the loader tests I’ll need to pass a fixed `today` to keep results from changing as the date changes.
+
+The `load_database()` function was built next; it calls `build_database`, runs the insert functions, then commits.
+
+`load_database()` was tested in [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/07-storage-test.ipynb) cells. The final output of counts in each table was: `Frequencies 4
+Assets 7
+Procedures 8
+Service_History 10`. A second test cell for Assets still showed 7, confirming that the commit reached the file and that running it twice did not cause a double count since the drop cleared the tables.
+
