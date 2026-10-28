@@ -108,14 +108,17 @@ Some issues I had while building this part: there was an instance of a stray com
 
 The identified clean rows were added to a good rows list, and the bad rows were added to a rejected rows list, along with the row number (relative to the header row being 1) and the reason for the row failing, indicated by a string explanation.
 
-The sample output of this is `8 good rows
+The sample output of this is:
+```
+8 good rows
 5 rejected rows
 rejected lines:
 9
 10
 11
 12
-14`.
+14
+```
 
 This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/02-load-assets.ipynb) used.
 
@@ -155,7 +158,9 @@ The blank fields were assessed in the same way as the asset loader; invalid proc
 
 I initially defined the valid tags as `VALID_SLOT` at the top of the function but replaced it with a line defining the expected tag intervals in `SLOT_DAYS` so that the line could serve two purposes by providing the valid tags in the form of the dictionary keys and the expected tag intervals as the values, so both checks use one line of given information.
 
-The sample output is as follows: `8 good rows
+The sample output is as follows: 
+```
+8 good rows
 7 rejected rows
 10 invalid procedure tag
 11 procedure_id does not match asset_id
@@ -163,7 +168,8 @@ The sample output is as follows: `8 good rows
 13 unknown service_frequency
 14 frequency does not match tag
 15 duplicate procedure_id
-16 blank description`
+16 blank description
+```
 
 This was the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/03-load-procedures.ipynb) used.
 
@@ -189,14 +195,17 @@ As with the `linked_asset_id` column in the assets table, the notes column in th
 
 In the [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/04-load-service-history.ipynb), to ensure all the required data was fed to the function, I had to chain the loaders together; frequencies and valid assets feed the procedures loader; the procedures plus asset commissioning dates are combined into procedure_commissioning, which feeds the service history loader.
 
-The sample output is as follows: `10 good rows
+The sample output is as follows: 
+```
+10 good rows
 6 rejected rows
 12 procedure not found
 13 invalid date_completed
 14 future date_completed
 15 duplicate record_id
 16 date_completed before commissioning
-17 blank date_completed`
+17 blank date_completed
+```
 
 Some issues I ran into with this stage: I once again accidentally put my accept lines into the loop, resulting in inflated row numbers. I messed up on using `strptime` by attempting to write a `datetime.strptime()` line and then calling it in a subsequent line. I switched in this phase from building in notebooks and copy-pasting over to the [loader](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file because I wanted to avoid possible indentation errors, which are difficult to debug when copy-pasting, but navigating this switch came with some hitches as I ran into `NameError`s and had to learn that everything has to be defined or imported before testing from outside the notebook since each notebook has its own memory, so the ease of testing is traded off for avoiding tedious indentation debugging, which I think is worth it because the testing by saving the file and restarting the kernel is still less of a hassle than manually rechecking every line indent.
 
@@ -208,8 +217,11 @@ Starting the SQLite phase, I created a Frequencies table using `DROP TABLE IF EX
 
 Initially, I had a mistaken `AUTOINCREMENT` for service_frequency, which would cause an error since it's not an integer value. Also, I did not have service_interval_days as `NOT NULL`. 
 
-After fixing them, I ran two test lines trying to add a duplicate 'weekly' row and a 'daily' row with a `None` service_interval_days to test the `UNIQUE` and `NOT NULL` constraints. The output of those tests was: `UNIQUE constraint failed: Frequencies.service_frequency
-NOT NULL constraint failed: Frequencies.service_interval_days`
+After fixing them, I ran two test lines trying to add a duplicate 'weekly' row and a 'daily' row with a `None` service_interval_days to test the `UNIQUE` and `NOT NULL` constraints. The output of those tests was: 
+```
+UNIQUE constraint failed: Frequencies.service_frequency
+NOT NULL constraint failed: Frequencies.service_interval_days
+```
 
 This schema is a second line of defense behind the loaders, which already reject bad rows with clear reasons.
 
@@ -225,8 +237,11 @@ I had some mess-ups here, like not putting the appropriate commas at the end of 
 
 To fix the foreign key error, I assigned the linked_asset_id values as `None`, then added a block before the commit to `UPDATE` the rows and assign all the values once all the rows exist, so it never points to a row that hasn't been added yet. This is similar to the asset loader working in two passes also to accommodate the linked_asset_id linking to other rows.
 
-Then I added the test cell to attempt adding an invalid status to fail the status check and updating an asset_id to one that did not exist to once again fail the foreign key constraint to prove that the checks were functioning. The output of these checks was: `CHECK constraint failed: status IN ('active', 'under repair', 'decommissioned')
-FOREIGN KEY constraint failed.`
+Then I added the test cell to attempt adding an invalid status to fail the status check and updating an asset_id to one that did not exist to once again fail the foreign key constraint to prove that the checks were functioning. The output of these checks was: 
+```
+CHECK constraint failed: status IN ('active', 'under repair', 'decommissioned')
+FOREIGN KEY constraint failed.
+```
 
 The database file here is also covered by .gitignore, so it remains uncommitted.
 
@@ -245,10 +260,14 @@ Then the insert functions for the good rows from each loader were built. `insert
 
 The `load_database()` function was built next; it calls `build_database`, runs the insert functions, then commits.
 
-`load_database()` was tested in [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/07-storage-test.ipynb) cells. The final output of counts in each table was: `Frequencies 4
+`load_database()` was tested in [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/07-storage-test.ipynb) cells. The final output of counts in each table was: 
+```
+Frequencies 4
 Assets 7
 Procedures 8
-Service_History 10`. A second test cell for Assets still showed 7, confirming that the commit reached the file and that running it twice did not cause a double count since the drop cleared the tables.
+Service_History 10
+```
+A second test cell for Assets still showed 7, confirming that the commit reached the file and that running it twice did not cause a double count since the drop cleared the tables.
 
 *2026-10-27: For the [test_loaders.py](https://github.com/alissamaharaj/due-diligence/blob/main/tests/test_loaders.py), I decided to go with `unittest` instead of plain `assert` so that when the test runs, if there are failures, it would identify each individually to make resolving failures easier.
 
@@ -270,3 +289,27 @@ Ran 4 tests in 0.007s
 
 OK
 ```
+
+*2016-10-28: Moving back to create the generator file. Some design decisions made upfront: the number of assets generated has to be restricted since the procedures and service history have multiple rows per asset, and those tables could become very large depending on the number of assets. I'm thinking of generating around 30-40 assets. Also, for the initial generated rows, I'm doing clean rows only first; then, when I have that down, I'll generate bad rows.
+
+At the top of the file, `csv`, `random`, `datetime/timedelta`, and `Path` were imported. The root path was defined just as in the storage and test files `ROOT = Path(__file__).resolve().parent.parent`, and the future output location path `OUT_DIR = ROOT / 'data' / 'generated'`. Then I defined all the variable fields for the `assets.csv`, including the headers, VALID_TYPEs, type: description pairs, locations, DATE_FMT for commissioning_date, and VALID_STATUSes.
+
+Then the `plan_counts()` function was defined. For a count of assets in the range of 30-40, taking the required pump: motor pairs into consideration, the number of pairs allowed must leave enough counts to include 2 of each other asset type: generator, transformer, boiler, and hvac; therefore, the maximum number of pairs has to be the total number of assets - 8, all divided by 2. This provides the restriction for the allowed number of pumps and motors each. After the number of pumps and motors are generated, the spare counts are used for other asset types.
+
+In a `if __name__ == '__main__':` block, `plan_counts()` was called for a random `rng` value, 5 times to test it. the `__name__` block is used so that when the function is imported into another file for use this section is ignored.
+```
+for seed in range(5):
+        counts = plan_counts(random.Random(seed))
+        print(seed, counts, sum(counts.values()))
+```
+The output of this test was:
+```
+0 {'PMP': 9, 'MTR': 9, 'GEN': 3, 'TRN': 4, 'HVC': 6, 'BLR': 5} 36
+1 {'PMP': 10, 'MTR': 10, 'GEN': 4, 'TRN': 2, 'HVC': 3, 'BLR': 3} 32
+2 {'PMP': 8, 'MTR': 8, 'GEN': 3, 'TRN': 4, 'HVC': 5, 'BLR': 2} 30
+3 {'PMP': 10, 'MTR': 10, 'GEN': 4, 'TRN': 3, 'HVC': 3, 'BLR': 3} 33
+4 {'PMP': 9, 'MTR': 9, 'GEN': 6, 'TRN': 3, 'HVC': 2, 'BLR': 4} 33
+```
+It shows that each run generated a count within the range, always matched the number of pumps and motors, and always had at least 2 of each other asset type.
+
+Next was the `make_asset()` function.---
