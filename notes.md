@@ -250,3 +250,23 @@ Assets 7
 Procedures 8
 Service_History 10`. A second test cell for Assets still showed 7, confirming that the commit reached the file and that running it twice did not cause a double count since the drop cleared the tables.
 
+*2026-10-27: For the [test_loaders.py](https://github.com/alissamaharaj/due-diligence/blob/main/tests/test_loaders.py), I decided to go with `unittest` instead of plain `assert` so that when the test runs, if there are failures, it would identify each individually to make resolving failures easier.
+
+Similar to `storage.py`, the file paths were defined using `ROOT = Path(__file__).resolve().parent.parent`, `SRC_DIR = ROOT / 'src'`, `DATA_DIR = ROOT / 'data'`, and `sys.path.append(str(SRC_DIR))`, so the test always finds `/src` and `/data` no matter what folder it's launched from, which were then imported from the `loaders` file.
+
+This was my first time using OOP for a project, so the class creation was tricky for me at first. When trying to create the first test class, I didn't write it to inherit `unittest.TestCase`, I included an `__init__` that was unnecessary and broke the code, mistakenly included an extra `.parent` in the file path, used a realtive `sys.path`, and placed the loaders import in the wrong place for the defining order, it needed to go after the relative path was defined, but I placed it before. Debugging these issues was a good learning experience for me. Making mistakes is always a better teacher than following a step-by-step procedure.
+
+The test cases first verify that the number of good and rejected lines are as expected, then compare the output to the expected dictionary/lists/strings/etc., as the case might be. An accidental typo in the asserted output reason string proved that the test was working as intended; for the other cases, after the first test ran successfully, I purposefully included typos to show that the test identifies differences in the asserted output and the actual output. The tests use the actual `.csv`s instead of building samples specifically for testing, so in the future, when changes are made to the .csv files, or when the generator script creates the large asset datasets, the version of the files used for the test cases would need to be frozen so as to not break the tests.
+
+Most of the test cases follow the same general format in terms of variable definitions as their respective insert functions from the `storage.py` file, but for `TestServiceHistory` instead of using a live `datetime.now`, a static `today = datetime(2026, 10, 21)` was used so that the test case doesn't break with calendar drift.
+
+After creating all the test cases, since there were multiple shared lines of setup variables between the `TestProcedures` and the `TestServiceHistory` classes, I decided to try out the `setUp` method that is available for classes as an interesting addition to the exercise, as well as simplifying the code. In it, I included the `load_frequencies`, `load_assets`, and `valid_asset_ids` lines, which were shared by the two test cases in the `SharedSetup` class, which inherits `unittest.TestCase`. Then I changed `TestProcedures` and `TestServiceHistory` to inherit `SharedSetup`.
+
+All four test cases run as expected after this process. This was the sample output:
+```
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.007s
+
+OK
+```
