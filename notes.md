@@ -353,3 +353,25 @@ A [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/
 0 rejected rows
 ```
 as expected.
+
+Then the same was done for `generate_procedures(assets)` as with `generate_assets`. The procedure constants were defined, the generated assets were looped through, and used as the template to determine what procedures need to be generated per asset. For each procedure tag per asset, a `procedure_id`, `asset_id`, `description`, and `service_frequency` are returned as a dictionary where these fields are the keys.
+
+One hitch I encountered here: I accidentally built the function to append key: value pairs at first instead of dictionaries per row.
+
+The `__name__` block test was performed: 
+```
+assets = generate_assets(random.Random(42), datetime.now())
+    write_csv(OUT_DIR / 'assets.csv', assets, fields)
+    print(f'wrote {len(assets)} rows')
+    procedures = generate_procedures(assets)
+    write_csv(OUT_DIR / 'procedures.csv', procedures, proc_fields)
+    print(f'wrote {len(procedures)} procedure rows')
+```
+and the `procedures.csv` was successfully generated with 160 rows.
+
+A similar [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/09-generated-procedures-test.ipynb) test to the one performed for the `generate_assets` function was performed. This was the output of that test:
+```
+160 good rows
+0 rejected rows
+```
+as expected.
