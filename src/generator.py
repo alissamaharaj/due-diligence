@@ -21,6 +21,18 @@ descriptions = {
 }
 OTHER_PREFIXES = ['GEN', 'TRN', 'HVC', 'BLR']
 
+PROC_TAGS = ['P1', 'P2', 'P3', 'P4']
+SLOT_FREQ = {'P1': 'weekly', 'P2': 'monthly', 'P3': 'quarterly', 'P4': 'annually'}
+proc_fields = ['procedure_id','asset_id','description','service_frequency']
+proc_descriptions = {
+    'pump': ['Pump Inspection', 'Vibration Analysis', 'Instrument Calibration', 'Pump Overhaul'],
+    'motor': ['Motor Inspection', 'Bearing Lubrication', 'Motor Alignment', 'Motor Overhaul'],
+    'generator': ['Generator Inspection', 'Belt Service', 'Coolant Replacement', 'Generator Overhaul'],
+    'transformer': ['Transformer Inspection', 'Oil Level Check', 'Thermal Scan', 'Transformer Overhaul'],
+    'boiler': ['Boiler Inspection', 'Sample Water Test', 'Trip Interlocks', 'Boiler Overhaul'],
+    'hvac': ['HVAC Inspection', 'Filter Service', 'Line Service', 'HVAC Overhaul']
+}
+
 def plan_counts(rng):
 
     total = rng.randint(30, 40)
@@ -70,3 +82,25 @@ def write_csv(path, rows, fieldnames):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+
+def generate_procedures(assets):
+    procedures = []
+    for asset in assets:
+        descriptions = proc_descriptions[asset['type']]
+        for i, tag in enumerate(PROC_TAGS):
+            procedures.append({
+                'procedure_id': f"{asset['asset_id']}-{tag}",
+                'asset_id': asset['asset_id'],
+                'description': descriptions[i],
+                'service_frequency': SLOT_FREQ[tag],
+            })
+
+    return procedures
+
+if __name__ == '__main__':
+    assets = generate_assets(random.Random(42), datetime.now())
+    write_csv(OUT_DIR / 'assets.csv', assets, fields)
+    print(f'wrote {len(assets)} rows')
+    procedures = generate_procedures(assets)
+    write_csv(OUT_DIR / 'procedures.csv', procedures, proc_fields)
+    print(f'wrote {len(procedures)} procedure rows')
