@@ -35,7 +35,7 @@ proc_descriptions = {
 
 HISTORY_DAYS = 90
 serv_hist_fields = ['record_id','procedure_id','date_completed', 'notes']
-BEHAVIORS = ['up_to_date', 'over_due', 'never']
+BEHAVIORS = ['up_to_date', 'overdue', 'never']
 BEHAVIOR_WEIGHTS = [60, 30, 10]
 FREQ_DAYS = {'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365}
 
@@ -113,7 +113,7 @@ def generate_service_history(rng, today, assets, procedures):
             continue
         interval = FREQ_DAYS[proc['service_frequency']]
         start = max(today - timedelta(days=HISTORY_DAYS), commissioned[proc['asset_id']])
-        if behavior == 'over_due': end = today - timedelta(days=rng.randint(interval + 5, interval * 2 + 10))
+        if behavior == 'overdue': end = today - timedelta(days=rng.randint(interval + 5, interval * 2 + 10))
         else: end = today
         current = start + timedelta(days=rng.randint(0, interval - 1))
         while current <= end:
