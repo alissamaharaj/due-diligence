@@ -50,5 +50,23 @@ def make_asset(rng, today, prefix, number, linked_id=''):
 
     return {'asset_id': asset_id,'type': asset_type,'description': dsc,'location': lct,'commissioning_date': cmms,'status': status,'linked_asset_id': linked_id}
 
-if __name__ == '__main__':
-    print(make_asset(random.Random(1), datetime(2026, 10, 28), 'PMP', 1, 'MTR-001'))
+def generate_assets(rng, today):
+    counts = plan_counts(rng)
+    assets = []
+    for n in range(1, counts['PMP'] + 1):
+        pump_id = f'PMP-{n:03d}'
+        motor_id = f'MTR-{n:03d}'
+        assets.append(make_asset(rng, today, 'PMP', n, motor_id))
+        assets.append(make_asset(rng, today, 'MTR', n, pump_id))
+    for prefix in OTHER_PREFIXES:
+        for n in range(1, counts[prefix] + 1):
+            assets.append(make_asset(rng, today, prefix, n))
+
+    return assets
+
+def write_csv(path, rows, fieldnames):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
