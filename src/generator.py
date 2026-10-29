@@ -33,6 +33,12 @@ proc_descriptions = {
     'hvac': ['HVAC Inspection', 'Filter Service', 'Line Service', 'HVAC Overhaul']
 }
 
+HISTORY_DAYS = 90
+serv_hist_fields = ['record_id','procedure_id','date_completed', 'notes']
+BEHAVIORS = ['up_to_date', 'over_due', 'never']
+BEHAVIOR_WEIGHTS = [60, 30, 10]
+FREQ_DAYS = {'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365}
+
 def plan_counts(rng):
 
     total = rng.randint(30, 40)
@@ -97,10 +103,42 @@ def generate_procedures(assets):
 
     return procedures
 
+def generate_service_history(rng, today, assets, procedures):
+    commissioned = {a['asset_id']: datetime.strptime(a['commissioning_date'], DATE_FMT) for a in assets}
+    history = []
+    record_num = 1
+    for proc in procedures:
+        behavior = rng.choices(BEHAVIORS, weights=BEHAVIOR_WEIGHTS)[0]
+        if behavior == 'never':
+            continue
+        interval = FREQ_DAYS[proc['service_frequency']]
+        start = max(today - timedelta(days=HISTORY_DAYS), commissioned[proc['asset_id']])
+        if behavior == 'over_due': end = today - timedelta(days=rng.randint(interval + 5, interval * 2 + 10))
+        else: end = today
+        current = start + timedelta(days=rng.randint(0, interval - 1))
+        while current <= end:
+            done = current + timedelta(days=rng.randint(-2, 2))
+            done = min(max(done, start), today)
+            history.append({
+                'record_id': f'SH-{record_num:04d}', 
+                'procedure_id': proc['procedure_id'], 
+                'date_completed': done.strftime(DATE_FMT), 
+                'notes': ''
+            })
+            record_num += 1
+            current += timedelta(days=interval)
+
+    return history
+
 if __name__ == '__main__':
-    assets = generate_assets(random.Random(42), datetime.now())
+    rng = random.Random(42)
+    today = datetime.now()
+    assets = generate_assets(rng, today)
     write_csv(OUT_DIR / 'assets.csv', assets, fields)
     print(f'wrote {len(assets)} rows')
     procedures = generate_procedures(assets)
     write_csv(OUT_DIR / 'procedures.csv', procedures, proc_fields)
     print(f'wrote {len(procedures)} procedure rows')
+    history = generate_service_history(rng, today, assets, procedures)
+    write_csv(OUT_DIR / 'service_history.csv', history, serv_hist_fields)
+    print(f'wrote {len(history)} history rows')
