@@ -290,11 +290,11 @@ Ran 4 tests in 0.007s
 OK
 ```
 
-*2016-10-28: Moving back to create the generator file. Some design decisions made upfront: the number of assets generated has to be restricted since the procedures and service history have multiple rows per asset, and those tables could become very large depending on the number of assets. I'm thinking of generating around 30-40 assets. Also, for the initial generated rows, I'm doing clean rows only first; then, when I have that down, I'll generate bad rows.
+*2026-10-28: Moving back to create the [generator](https://github.com/alissamaharaj/due-diligence/blob/main/src/generator.py) file. Some design decisions made upfront: the number of assets generated has to be restricted since the procedures and service history have multiple rows per asset, and those tables could become very large depending on the number of assets. I'm thinking of generating around 30-40 assets. Also, for the initial generated rows, I'm doing clean rows only first; then, when I have that down, I'll generate bad rows.
 
 At the top of the file, `csv`, `random`, `datetime/timedelta`, and `Path` were imported. The root path was defined just as in the storage and test files `ROOT = Path(__file__).resolve().parent.parent`, and the future output location path `OUT_DIR = ROOT / 'data' / 'generated'`. Then I defined all the variable fields for the `assets.csv`, including the headers, VALID_TYPEs, type: description pairs, locations, DATE_FMT for commissioning_date, and VALID_STATUSes.
 
-Then the `plan_counts()` function was defined. For a count of assets in the range of 30-40, taking the required pump: motor pairs into consideration, the number of pairs allowed must leave enough counts to include 2 of each other asset type: generator, transformer, boiler, and hvac; therefore, the maximum number of pairs has to be the total number of assets - 8, all divided by 2. This provides the restriction for the allowed number of pumps and motors each. After the number of pumps and motors are generated, the spare counts are used for other asset types.
+Then the `plan_counts()` function was defined. For a count of assets in the range of 30-40, taking the required pump: motor pairs into consideration, the number of pairs allowed must leave enough counts to include 2 of each other asset type: generator, transformer, boiler, and hvac; therefore, the maximum number of pairs has to be the total number of assets - 8, all divided by 2. This provides the restriction for the maximum number of pairs. After the number of pumps and motors are generated, the spare counts are used for other asset types.
 
 In a `if __name__ == '__main__':` block, `plan_counts()` was called for a random `rng` value, 5 times to test it. the `__name__` block is used so that when the function is imported into another file for use this section is ignored.
 ```
@@ -312,4 +312,44 @@ The output of this test was:
 ```
 It shows that each run generated a count within the range, always matched the number of pumps and motors, and always had at least 2 of each other asset type.
 
-Next was the `make_asset()` function.---
+Next was the `make_asset()` function. Each  variable was defined using the VALID_TYPE prefixes for the `asset_id` and `asset_type`; descriptions and locations are random choices from the defined lists; commissioning_date uses a randomly generated past datetime, relative to the `today` datetime passed into the argument of the function, and the status is assigned as 'active' for every row so far. The function returns a dictionary with each header as the keys and the generated values. `linked_assets` are added directly instead of on a second pass, as it usually is, since the required asset_id pairs exist before the dictionary is built, so there is no error to avoid.
+
+The `__name__` block was changed to now test the `make_asset(rng, today, prefix, number, linked_id='')` function using:
+`print(make_asset(random.Random(1), datetime(2026, 10, 28), 'PMP', 1, 'MTR-001'))`.
+The output of this test was: `{'asset_id': 'PMP-001', 'type': 'pump', 'description': 'Cooling Water Pump', 'location': 'Rooftop', 'commissioning_date': '2026-05-22', 'status': 'active', 'linked_asset_id': 'MTR-001'}` showing that all the fields are generated as expected.
+
+*2026-10-29: Built the `generate_assets(rng, today)` function using `plan_counts`; string formatting was used to generate pump and motor ids for the range of the counts, and they are then appended to a list. The same is then done for the other asset types, and the list is returned.
+
+The `__name__` block was again used for testing: 
+```
+assets = generate_assets(random.Random(42), datetime(2026, 10, 28))
+print(len(assets))
+for a in assets[:4]: print(a)
+```
+The output of this test was:
+```
+40
+{'asset_id': 'PMP-001', 'type': 'pump', 'description': 'Cooling Water Pump', 'location': 'Substation', 'commissioning_date': '2023-06-10', 'status': 'active', 'linked_asset_id': 'MTR-001'}
+{'asset_id': 'MTR-001', 'type': 'motor', 'description': 'Spare Motor', 'location': 'Boiler Room', 'commissioning_date': '2025-11-06', 'status': 'active', 'linked_asset_id': 'PMP-001'}
+{'asset_id': 'PMP-002', 'type': 'pump', 'description': 'Standby Feedwater Pump', 'location': 'Generator Room', 'commissioning_date': '2025-03-08', 'status': 'active', 'linked_asset_id': 'MTR-002'}
+{'asset_id': 'MTR-002', 'type': 'motor', 'description': 'Mixer Motor', 'location': 'Pump Room 1', 'commissioning_date': '2024-11-08', 'status': 'active', 'linked_asset_id': 'PMP-002'}
+```
+This shows that the number of assets generated is within the set range, and for the sample printed, all the fields match what is intended per row and type.
+
+Small hitch I had with this stage: I included the append lines outside the intended loop at first, resulting in a number of assets appended to the list that was outside of the intended range.
+
+Then I built the `write_csv(path, rows, fieldnames)`. `path.parent.mkdir(parents=True, exist_ok=True)` is used to open the correct folder from the given path and create the file if it does not already exist. `open()` is used to open the file for writing, and `csv.DictWriter` is used to write rows as a dictionary.
+A final `__name__` block was used for testing. A live datetime was used for testing even though a static datetime was used for building, since the final version will use a live datetime.
+```
+    assets = generate_assets(random.Random(42), datetime.now())
+    write_csv(OUT_DIR / 'assets.csv', assets, fields)
+    print(f'wrote {len(assets)} rows')
+```
+This test successfully created the generated `assets.csv` with 40 rows of assets.
+
+A [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/08-generated-assets-test.ipynb) was used to test the generated assets in the loader. The output of this test was:
+```
+40 good rows
+0 rejected rows
+```
+as expected.
