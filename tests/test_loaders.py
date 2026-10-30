@@ -9,7 +9,7 @@ DATA_DIR = ROOT / 'data'
 
 sys.path.append(str(SRC_DIR))
 
-from loaders import load_frequencies , load_assets , load_procedures , load_service_history , DATE_FMT
+from loaders import load_frequencies , load_assets , load_procedures , load_service_history , DATE_FMT, load_all
 
 class SharedSetup(unittest.TestCase):
 
@@ -59,5 +59,20 @@ class TestServiceHistory(SharedSetup):
         rsns = {line_num: reason for line_num, reason, row in rejected}
         self.assertEqual(rsns, {12: 'procedure not found', 13: 'invalid date_completed', 14: 'future date_completed', 15: 'duplicate record_id', 16: 'date_completed before commissioning', 17: 'blank date_completed'})
 
+class TestLoadAll(unittest.TestCase):
+
+    def test_load_all(self):
+        result = load_all(DATA_DIR, datetime(2026, 10, 21))
+        good_assets, rejected_assets = result['assets']
+        good_proc, rejected_proc = result['procedures']
+        good_history, rejected_history = result['service_history']
+
+        self.assertEqual(len(good_assets), 7)
+        self.assertEqual(len(rejected_assets), 8)
+        self.assertEqual(len(good_proc), 8)
+        self.assertEqual(len(rejected_proc), 7)
+        self.assertEqual(len(good_history), 10)
+        self.assertEqual(len(rejected_history), 6)
+        self.assertEqual(result['frequencies'], {'weekly': 7, 'monthly': 30, 'quarterly': 90, 'annually': 365})
 
 if __name__ == '__main__': unittest.main()
