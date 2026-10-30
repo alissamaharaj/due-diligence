@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime
-from loaders import load_frequencies , load_assets , load_procedures , load_service_history , DATE_FMT, load_all
+from loaders import load_all
 
 DB_PATH = Path(__file__).resolve().parent.parent/ 'data' / 'maintenance.sqlite'
 DATA_DIR = DB_PATH.parent
