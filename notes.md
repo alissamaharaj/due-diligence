@@ -397,4 +397,25 @@ The [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebook
 
 During the notebook testing, I accidentally encountered an error since I copy-pasted the loader test from the previous notebook, but this included a fixed datetime instead of a live one. Changing it fixed the issue; now only the test_loaders uses a fixed datetime; everywhere else has a live datetime.
 
-TODO: build a load_all(data_dir, today) helper that chains all four loaders and returns the good and rejected lists for each table. Do it after the storage.py switch to data/generated/, since load_database() already does most of this chaining.
+*2026-10-30: Before moving on, `/data/generated/` was added to `.gitignore` so that it's no longer tracked by the repo, so that the files regenerated on every run are also untracked, avoiding drift. This is okay since they are reproducible from the generator.
+
+Next, I modified the insert functions in the [storage](https://github.com/alissamaharaj/due-diligence/blob/main/src/storage.py) file and created a `load_all` function in the [loaders](https://github.com/alissamaharaj/due-diligence/blob/main/src/loaders.py) file to chain together the loaders so they can all run at once. 
+
+`data_dir=DATA_DIR` was passed into each insert function (with the exception of the frequencies one since the generator does not rebuild it; that was a hitch here since I initially tried including it, which would cause the loader to look for a generated file that does not exist), and data_dir was also passed into `load_database`; after running, the correct number of rows were still loaded, and `test_loaders` was also run to confirm that this didn't break anything.
+
+The `load_all(data_dir, today, freq_path=...)` was built by copying the loader chain from `insert_history` function since this one already chained together all the loaders. This function returns this result:
+```
+result = {
+        'frequencies': frequencies,
+        'assets': (good_assets, rejected_assets),
+        'procedures': (good_proc, rejected_proc),
+        'service_history': (good_history, rejected_history),
+    }
+```
+I chose to define them individually to avoid having to use an empty list for the second value for the frequencies since it has no rejected rows.
+
+`DATA_DIR` was defined in loaders for use in the frequency path, and `today` was set as a parameter of the function instead of a constant so that it works whether a fixed or live datetime is used.
+
+Some other hitches encountered: when adjusting the frequency path, I forgot to omit the `/ 'frequencies.csv'` after inserting the `freq_path`, which would cause a double filename in the path, and I forgot to remove the defined `today` constant when copy-pasting over the lines from the insert function.
+
+A new [notebook](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/11-load-all-test.ipynb) was used for testing to confirm the expected number of rows was loaded from the test .csvs and the generated ones. One hitch here: I didn't define the `result` variable before calling it for the test, giving a `NameError`. The correct number of expected rows for each was returned.
