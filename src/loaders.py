@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from pathlib import Path
 
 def load_frequencies(path):
     fqs = dict()
@@ -191,3 +192,23 @@ def load_service_history(path, procedure_commissioning, today):
 
     rejected.sort()
     return good, rejected
+
+DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
+
+def load_all(data_dir, today, freq_path=DATA_DIR / 'frequencies.csv'):
+    frequencies = load_frequencies(freq_path)
+    good_assets, rejected_assets = load_assets(data_dir / 'assets.csv')
+    valid_asset_ids = {row['asset_id'] for line_num, row in good_assets}
+    good_proc, rejected_proc = load_procedures(data_dir/ 'procedures.csv', valid_asset_ids, frequencies)
+    asset_dates = {row['asset_id']: datetime.strptime(row['commissioning_date'], DATE_FMT) for line_num, row in good_assets}
+    procedure_commissioning = {row['procedure_id']: asset_dates[row['asset_id']] for line_num, row in good_proc}
+    good_history, rejected_history = load_service_history(data_dir/ 'service_history.csv', procedure_commissioning, today)
+
+    result = {
+        'frequencies': frequencies,
+        'assets': (good_assets, rejected_assets),
+        'procedures': (good_proc, rejected_proc),
+        'service_history': (good_history, rejected_history),
+    }
+
+    return result
