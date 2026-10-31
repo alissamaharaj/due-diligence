@@ -196,6 +196,22 @@ def load_service_history(path, procedure_commissioning, today):
 DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 
 def load_all(data_dir, today, freq_path=DATA_DIR / 'frequencies.csv'):
+    """Run every loader and return the results in one dict.
+
+    Takes the folder holding assets.csv, procedures.csv and
+    service_history.csv, an optional datetime for 'today' (defaults to
+    datetime.now() when None), and the path to frequencies.csv.
+
+    Returns a dict with four keys:
+      'frequencies'     -> dict of {service_frequency: interval_days}
+      'assets'          -> (good_rows, rejected_rows)
+      'procedures'      -> (good_rows, rejected_rows)
+      'service_history' -> (good_rows, rejected_rows)
+
+    Frequencies has no rejected rows, so it is stored as a plain dict
+    rather than a pair. Rejected rows carry their row number and reason.
+    """
+
     frequencies = load_frequencies(freq_path)
     good_assets, rejected_assets = load_assets(data_dir / 'assets.csv')
     valid_asset_ids = {row['asset_id'] for line_num, row in good_assets}
