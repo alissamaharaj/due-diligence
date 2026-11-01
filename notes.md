@@ -432,11 +432,11 @@ Hitches at this stage: When calling `get_conn()` from the storage file, I accide
 
 Started today by building the `history_for_procedure()` prototype, again, built first in the notebook, then transferred to queries.py. The SQL query for record_id, date_completed, and notes per procedure_id was built and tested using `PMP-001-P1` and  `PMP-002-P1`. Since PMP-001-P1 has no service_history generated, this returned nothing as expected, so PMP-002-P1 was used to verify functionality, returning the expected 13 rows with a start date of `2026-08-01` and an end date of `2026-10-28`. The gaps between service dates also confirmed that the allocated 'date jitter' was functioning as expected. Just as with `count_by_type`, the prototype and function call cell were both kept in the notebook, and an assert comparing them was also added.
 
-Hitches encountered: In the function, I hardcoded the procedure_id initially instead of passing it as an argument, so to test a different procedure_id, I had to edit the hardcoded string. I included redundant parentheses around the triple-quoted SQL string because that's how I learnt it from Dr. Chuck during py4e, this had to be cleaned up for `count_by_type` also. I also initially called the function `service_history`, which I changed to `history_for_procedure` for clarity, since so many other things in the project are already called service_history.
+Hitches encountered: In the function, I hardcoded the procedure_id initially instead of passing it as an argument, so to test a different procedure_id, I had to edit the hardcoded string. I included redundant parentheses around the triple-quoted SQL string because that's how I learnt it from Dr. Chuck during py4e; this had to be cleaned up for `count_by_type` also. I also initially called the function `service_history`, which I changed to `history_for_procedure` for clarity, since so many other things in the project are already called service_history.
 
 Then I moved on to the linked_asset functions: `linked_partner()` and `linked_pairs()`. Separate functions were created so that one returns a single pair and the other returns all pairs. The same SQL query was built, selecting the asset_id and type alongside its partner’s id and type to self-join on Assets using prefixes `a` and `b` to differentiate the copies for asset_id and linked_asset_id. The differing part of both functions is the `WHERE` line: `linked_partner` uses `WHERE a.asset_id = ?` to specify which single asset_id we want to return a partner for, whereas `linked_pairs` uses `WHERE a.asset_id < b.asset_id` to return the full list of pairs by comparing them alphabetically; I chose this format instead of `WHERE a.type = 'pump'` so it can work for all types of linked pairs, not only pumps and motors. The left column is whichever sorts first alphabetically.
 
-The `linked_partner` function returns an empty list in the cases of unlinked assets and unknown assets without raising an error, which is a limitation of the function. 
+The `linked_partner` function returns an empty list in the case of unlinked assets and unknown assets without raising an error, which is a limitation of the function. 
 
 Hitches: Instead of assigning the aliases as prefixes, I tried to attach them `FROM Assets as a, b` only in the `SELECT` line, with none on the `JOIN` line. I tried having 2 `SELECT` clauses in one SQL string, which is a SyntaxError. I accidentally kept a tuple in the prototype argument for `linked_pairs`, which doesn't include a placeholder in the SQL string; a tuple and a ? placeholder have to go together. I only wrote the unpacking loop for 2 of the variables when the output returned 4, and I had a typo in the loop variables.
 
@@ -444,3 +444,27 @@ At this point, I also started including docstrings for the functions so that a h
 
 Just as with the other query functions, the same prototype, function call, and assert pattern as before.
 
+*2026-11-01: Moving on to the date-based queries. I decided that the next due service date would be calculated from the last completed service date + service_interval, and for procedures with no service history, commissioning_date + service_interval. This is in line with the first service being due one interval after the asset began usage, and so that never-completed procedures aren't hidden, then maintain a due date.
+
+For `last_completed`, the SQL query was built for procedure_id and MAX(date_completed). A few test procedures were selected to check against the query output. The chosen procedures with no service history were not present as expected, and the date_completed matched what was expected for the other chosen procedures. The length of the output list was 96, compared to 160 total procedures, which confirms that the actual weighting of never-serviced procedures is much higher than the allocated 10%; it's closer to 40% due to the history window cutting out quarterly and annual procedures that were last performed outside the 90-day window.
+
+The same prototype, function call, and assert pattern as before was followed.
+
+Then I started to modify the prototype to include a `LEFT JOIN` so that all the procedures are part of the output regardless of whether they have service history or not, since `LEFT JOIN` keeps all the rows from the left table. This involved joining all 160 procedure rows from Procedures to the last service history date, with never-serviced procedures having a `None` date. This was the SQL string used to do this:
+```
+sql = '''
+    SELECT p.procedure_id, h.last_done
+    FROM Procedures as p
+    LEFT JOIN  ( 
+        SELECT procedure_id, MAX(date_completed)
+    AS last_done
+        FROM Service_History
+        GROUP BY procedure_id
+    ) as h
+    ON p.procedure_id = h.procedure_id
+    ORDER BY p.procedure_id
+    '''
+```
+Then I ran the new prototype, which gave the expected 160 rows, with the never-serviced procedures having a `None` last_completed date as expected.
+
+Something caught my attention when I did this, though: the assert cell after the function call still passed. This should not have happened because, at this point, the output of the prototype cell and the function call cell did not match, which is exactly what the assert is supposed to catch. This made me realize a bug in the entire notebook: since I defined the output of both the prototype and the function call as `rows`, the prototype output was being overwritten by the function call every time, and the assert was always comparing the function call results to itself. (tbc)
