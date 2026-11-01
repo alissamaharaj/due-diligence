@@ -72,3 +72,22 @@ def linked_pairs(conn):
     '''
     rows = cur.execute(sql).fetchall()
     return rows
+
+def last_completed(conn):
+    """Get the most recent completion date for each serviced procedure.
+
+    Takes an open connection. Returns a list of (procedure_id, last_done)
+    tuples ordered by procedure_id, where last_done is the latest
+    date_completed as an ISO string. Procedures with no history rows are
+    not included, so the list has fewer entries than the Procedures table.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT procedure_id, MAX(date_completed) as last_done
+    FROM Service_History
+    GROUP BY procedure_id
+    ORDER BY procedure_id
+    '''
+    rows = cur.execute(sql).fetchall()
+    return rows
