@@ -97,3 +97,23 @@ def last_completed_all(conn):
     '''
     rows = cur.execute(sql).fetchall()
     return rows
+
+def procedure_due_dates(conn):
+
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT p.procedure_id, h.last_done, a.commissioning_date, f.service_interval_days, date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due
+    FROM Procedures as p
+    LEFT JOIN  ( 
+        SELECT procedure_id, MAX(date_completed) AS last_done
+        FROM Service_History
+        GROUP BY procedure_id
+    ) as h
+    ON p.procedure_id = h.procedure_id
+    JOIN Assets AS a ON p.asset_id = a.asset_id
+    JOIN Frequencies AS f ON p.service_frequency = f.service_frequency
+    ORDER BY p.procedure_id
+    '''
+    rows = cur.execute(sql).fetchall()
+    return rows
