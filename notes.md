@@ -481,4 +481,6 @@ Hitches for this stage (with the exception of the assert bug fix): I had a lot o
 
 Once that was functioning properly, the query was again modified to include the due dates in a fifth column; I had issues with this because I had never done an SQL query this complex before. `COALESCE(h.last_done, a.commissioning_date)` was used to pick the starting date by looking at the last done and commissioning dates and picking the first non `NULL` value from left to right; this works for the rule of using the last completed date if there is one; otherwise, use the commissioning date. 
 
-Next, that fifth column addition was wrapped in `date()` so that it is turned into a date string that can be modified. 
+Next, that fifth column addition was wrapped in `date()`: `date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due`, so that it is turned into a date string that can be modified. The `COALESCE` function returns the date, then the service interval days is used as the modifier added to the start date in days. This is selected as the `next_due` column. The modified prototype cell returned 160 rows of last done date, commissioning date, service interval, and next due date for each procedure, as expected.
+
+As per usual, the function was transferred to queries; a call cell and assert cell were built and run. 
