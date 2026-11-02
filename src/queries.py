@@ -99,7 +99,16 @@ def last_completed_all(conn):
     return rows
 
 def procedure_due_dates(conn):
+    """Get the next due date for every procedure.
 
+    Takes an open connection. Returns a list of (procedure_id, last_done,
+    commissioning_date, service_interval_days, next_due) tuples for all
+    procedures, ordered by procedure_id. last_done is None if the procedure
+    has never been serviced. next_due is an ISO string, never None: last_done
+    plus the service interval, or commissioning_date plus the interval if
+    never serviced. Annually is 365 days, so a leap year shifts the date
+    (e.g. BLR-001-P4 is due 2024-03-23).
+    """
     cur = conn.cursor()
 
     sql = '''
@@ -116,4 +125,36 @@ def procedure_due_dates(conn):
     ORDER BY p.procedure_id
     '''
     rows = cur.execute(sql).fetchall()
+    return rows
+
+def overdue_procedures(conn, today):
+    """Get every procedure whose next due date is before today.
+
+    Takes an open connection and today as an ISO string (YYYY-MM-DD).
+    Returns a list of (procedure_id, last_done, next_due) tuples for
+    procedures with next_due earlier than today, ordered by next_due
+    (oldest first) and then procedure_id. A procedure due exactly on
+    today is not overdue. last_done is None if the procedure has never
+    been serviced; its next_due is then based on the commissioning date.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT d.procedure_id, d.last_done, d.next_due
+    FROM (
+        SELECT p.procedure_id, h.last_done, a.commissioning_date, f.service_interval_days, date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due
+        FROM Procedures as p
+        LEFT JOIN  ( 
+            SELECT procedure_id, MAX(date_completed) AS last_done
+            FROM Service_History
+            GROUP BY procedure_id
+        ) as h
+        ON p.procedure_id = h.procedure_id
+        JOIN Assets AS a ON p.asset_id = a.asset_id
+        JOIN Frequencies AS f ON p.service_frequency = f.service_frequency
+    ) AS d
+    WHERE d.next_due < ?
+    ORDER BY d.next_due, d.procedure_id
+    '''
+    rows = cur.execute(sql, (today,)).fetchall()
     return rows
