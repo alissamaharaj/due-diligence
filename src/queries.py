@@ -223,3 +223,35 @@ def due_within(conn, today, days):
     '''
     rows = cur.execute(sql, (today, today, days)).fetchall()
     return rows
+
+def overdue_by_location(conn, today):
+    """Get overdue procedure counts per location, split by service history.
+
+    Takes an open connection and today as an ISO date string (YYYY-MM-DD).
+    Returns a list of (location, overdue_with_history,
+    overdue_never_serviced) tuples, one per location with at least one
+    overdue procedure, ordered by total overdue descending then location.
+    A procedure is overdue when next_due is before today.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT d.location, SUM(CASE WHEN d.last_done IS NOT NULL THEN 1 ELSE 0 END) AS overdue_with_history, SUM(CASE WHEN d.last_done IS NULL THEN 1 ELSE 0 END) AS overdue_never_serviced
+    FROM (
+        SELECT p.procedure_id, h.last_done, a.commissioning_date, a.location, f.service_interval_days, date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due
+        FROM Procedures as p
+        LEFT JOIN  ( 
+            SELECT procedure_id, MAX(date_completed) AS last_done
+            FROM Service_History
+            GROUP BY procedure_id
+        ) as h
+        ON p.procedure_id = h.procedure_id
+        JOIN Assets AS a ON p.asset_id = a.asset_id
+        JOIN Frequencies AS f ON p.service_frequency = f.service_frequency
+    ) AS d
+    WHERE d.next_due < ?
+    GROUP BY d.location
+    ORDER BY overdue_with_history + overdue_never_serviced DESC, d.location
+    '''
+    rows = cur.execute(sql, (today,)).fetchall()
+    return rows
