@@ -190,3 +190,36 @@ def due_next(conn, n):
     '''
     rows = cur.execute(sql, (n,)).fetchall()
     return rows
+
+def due_within(conn, today, days):
+    """Get procedures due within a window of days, starting today.
+
+    Takes an open connection, today as an ISO date string (YYYY-MM-DD),
+    and days as a plain integer. Returns a list of (procedure_id,
+    last_done, next_due) tuples where next_due falls from today through
+    today plus days, both ends included, ordered by next_due then
+    procedure_id. Procedures due today are included and overdue
+    procedures are not. last_done is None for never-serviced procedures.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT d.procedure_id, d.last_done, d.next_due
+    FROM (
+        SELECT p.procedure_id, h.last_done, a.commissioning_date, f.service_interval_days, date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due
+        FROM Procedures as p
+        LEFT JOIN  ( 
+            SELECT procedure_id, MAX(date_completed) AS last_done
+            FROM Service_History
+            GROUP BY procedure_id
+        ) as h
+        ON p.procedure_id = h.procedure_id
+        JOIN Assets AS a ON p.asset_id = a.asset_id
+        JOIN Frequencies AS f ON p.service_frequency = f.service_frequency
+    ) AS d
+    WHERE d.next_due >= ?
+      AND d.next_due <= date(?, '+' || ? || ' days')
+    ORDER BY d.next_due, d.procedure_id
+    '''
+    rows = cur.execute(sql, (today, today, days)).fetchall()
+    return rows
