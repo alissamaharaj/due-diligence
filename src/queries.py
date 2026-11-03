@@ -158,3 +158,35 @@ def overdue_procedures(conn, today):
     '''
     rows = cur.execute(sql, (today,)).fetchall()
     return rows
+
+def due_next(conn, n):
+    """Get the n procedures with the earliest next due dates.
+
+    Takes an open connection and n, the number of rows to return as an
+    integer. Returns a list of (procedure_id, last_done, next_due) tuples
+    ordered by next_due (oldest first) and then procedure_id. Overdue
+    procedures are included, so the list starts with the most overdue.
+    last_done is None if the procedure has never been serviced; its
+    next_due is then based on the commissioning date.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT d.procedure_id, d.last_done, d.next_due
+    FROM (
+        SELECT p.procedure_id, h.last_done, a.commissioning_date, f.service_interval_days, date(COALESCE(h.last_done, a.commissioning_date),'+' || f.service_interval_days || ' days') AS next_due
+        FROM Procedures as p
+        LEFT JOIN  ( 
+            SELECT procedure_id, MAX(date_completed) AS last_done
+            FROM Service_History
+            GROUP BY procedure_id
+        ) as h
+        ON p.procedure_id = h.procedure_id
+        JOIN Assets AS a ON p.asset_id = a.asset_id
+        JOIN Frequencies AS f ON p.service_frequency = f.service_frequency
+    ) AS d
+    ORDER BY d.next_due, d.procedure_id
+    LIMIT ?
+    '''
+    rows = cur.execute(sql, (n,)).fetchall()
+    return rows
