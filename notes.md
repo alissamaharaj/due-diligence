@@ -505,4 +505,4 @@ One thing to note about the locations: since the .csvs are randomly generated, t
 
 Hitches: The first pass at building the prototype had a malformed JOIN Assets clause. The major problem at this stage was that after the initial test, the output counts for 'Boiler Room' and 'Pump Room 2' did not match my pivot table from my spreadsheet. This was because there was an error where I assigned an asset from 'Pump Room 2' to 'Boiler Room' mistakenly, since I built the location column of the spreadsheet by hand. In the ORDER BY clause, I also included DESC in the wrong place.
 
-At this point, the due date SQL is reused in 4 functions. I'm considering a shared view or constant to be used in each.
+At this point, the due date SQL is reused in 5 functions. I'm considering a shared view or constant to be used in each.
