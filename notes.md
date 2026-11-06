@@ -506,3 +506,13 @@ One thing to note about the locations: since the .csvs are randomly generated, t
 Hitches: The first pass at building the prototype had a malformed JOIN Assets clause. The major problem at this stage was that after the initial test, the output counts for 'Boiler Room' and 'Pump Room 2' did not match my pivot table from my spreadsheet. This was because there was an error where I assigned an asset from 'Pump Room 2' to 'Boiler Room' mistakenly, since I built the location column of the spreadsheet by hand. In the ORDER BY clause, I also included DESC in the wrong place.
 
 At this point, the due date SQL is reused in 5 functions. I'm considering a shared view or constant to be used in each.
+
+*2026-11-06: Moving on to the Excel phase, decided to use the `xlsxwriter` library, then created `requirements.txt` in the repo root to indicate that the project now depends on xlsxwriter.
+
+Next, [notebook 13](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/13-excel-smoke-test.ipynb) was created as a smoke test for xlsxwriter. 
+
+After that was confirmed to be working as expected, [reports.py](https://github.com/alissamaharaj/due-diligence/blob/main/src/reports.py) was built. I started off by defining the `ROOT` filepath so that the code directs the workbooks to the `reports` folder; a `mkdir` line within the function also ensures that the folder is created if it does not already exist. Next, `write_overdue_by_location(conn, today, path)` was built by looping through the rows loaded by the `overdue_by_location()` query function and using xlsxwriter to create an Excel sheet from them. The column widths were set so that the entire header text is always visible, and the header row was frozen so that it stays visible while scrolling. The totals are `SUM` formulas over the data rows, with the range built from `len(rows)` so it stays correct if the number of locations changes. The `Total Overdue` column is calculated from `(=B2+C2)`.
+
+[Notebook 14](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/14-excel-overdue-by-location.ipynb) was created and used to test the `write_overdue_by_location` function for the same 'today' used for the pivot table, '2026-11-02', so the output could be checked against it. The function matched the pivot table output with totals of 32, 57, and 89.
+
+Hitches for this stage: I had a missing colon in my function `def` line; I tried to give 3 formulas at once in the `write_formula` line, which can only take one cell per call; for the initial `SUM` formulae, I had a static formula instead of one that changes per row; the sum lines were indented in the unpacking loop; and I forgot to include the `/src` in the import path for the `storage` functions.
