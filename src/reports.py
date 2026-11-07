@@ -3,7 +3,7 @@ import xlsxwriter
 from xlsxwriter import chart
 from xlsxwriter import worksheet
 from xlsxwriter import workbook
-from queries import overdue_by_location, overdue_by_type
+from queries import overdue_by_location, overdue_by_type, history_by_month
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORT_DIR = ROOT / 'reports'
@@ -113,6 +113,48 @@ def write_overdue_by_type(conn, today, path):
     chart.set_title({'name': 'Overdue Procedures by Type'})
     chart.set_x_axis({'name': 'Type'})
     chart.set_y_axis({'name': 'Overdue procedures'})
+    worksheet.insert_chart('F2', chart)
+
+    workbook.close()
+
+def write_history_by_month(conn, path):
+    """Write the history-by-month report to an Excel workbook.
+
+    Takes an open connection and the path of the .xlsx file to create.
+    Writes one sheet, 'History by Month', with a bold header row (frozen),
+    one row per month showing the number of services completed that month,
+    and a bold Total row with a SUM formula. Adds a column chart of
+    services completed by month, placed to the right of the data.
+    Creates the reports folder if it does not exist; the folder of 'path'
+    must already exist. Returns nothing.
+    """
+
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    rows = history_by_month(conn)
+    workbook = xlsxwriter.Workbook(path)
+    bold = workbook.add_format({'bold': True})
+    worksheet = workbook.add_worksheet('History by Month')
+    worksheet.set_column(0, 0, 12)
+    worksheet.set_column(1, 1, 24)
+    worksheet.freeze_panes(1, 0)
+    worksheet.write(0, 0, 'Month', bold)
+    worksheet.write(0, 1, 'Services Completed', bold)
+    worksheet.write(len(rows) + 1, 0, 'Total', bold)
+    for i, row in enumerate(rows, start=1):
+        worksheet.write(i, 0, row[0])
+        worksheet.write(i, 1, row[1])
+    worksheet.write_formula(len(rows) + 1, 1, f'=SUM(B2:B{len(rows)+1})', bold)
+
+    chart = workbook.add_chart({'type': 'column'})
+    chart.add_series({
+        'name': ['History by Month', 0, 1],
+        'categories': ['History by Month', 1, 0, len(rows), 0],
+        'values': ['History by Month', 1, 1, len(rows), 1],
+    })
+    chart.set_title({'name': 'Services Completed by Month'})
+    chart.set_x_axis({'name': 'Month'})
+    chart.set_y_axis({'name': 'Services Completed'})
     worksheet.insert_chart('F2', chart)
 
     workbook.close()
