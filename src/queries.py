@@ -288,3 +288,22 @@ def overdue_by_type(conn, today):
     '''
     rows = cur.execute(sql, (today,)).fetchall()
     return rows
+
+def history_by_month(conn):
+    """Get the number of procedures completed per month.
+
+    Takes an open connection. Returns a list of (month, services_completed)
+    tuples, one per month with at least one service completed, ordered by
+    month ascending. month is a YYYY-MM string and services_completed is
+    the count of procedures completed in that month.
+    """
+    cur = conn.cursor()
+
+    sql = '''
+    SELECT strftime('%Y-%m', date_completed) AS month, COUNT(*) AS services_completed
+    FROM Service_History
+    GROUP BY month
+    ORDER BY month
+    '''
+    rows = cur.execute(sql).fetchall()
+    return rows
