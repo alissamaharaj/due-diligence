@@ -1,8 +1,5 @@
 from pathlib import Path
 import xlsxwriter
-from xlsxwriter import chart
-from xlsxwriter import worksheet
-from xlsxwriter import workbook
 from queries import overdue_by_location, overdue_by_type, history_by_month
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -146,11 +143,12 @@ def write_history_by_month(conn, path):
         worksheet.write(i, 1, row[1])
     worksheet.write_formula(len(rows) + 1, 1, f'=SUM(B2:B{len(rows)+1})', bold)
 
-    chart = workbook.add_chart({'type': 'column'})
+    chart = workbook.add_chart({'type': 'line'})
     chart.add_series({
         'name': ['History by Month', 0, 1],
         'categories': ['History by Month', 1, 0, len(rows), 0],
         'values': ['History by Month', 1, 1, len(rows), 1],
+        'marker': {'type': 'circle', 'size': 7},
     })
     chart.set_title({'name': 'Services Completed by Month'})
     chart.set_x_axis({'name': 'Month'})
