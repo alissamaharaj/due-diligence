@@ -507,6 +507,8 @@ Hitches: The first pass at building the prototype had a malformed JOIN Assets cl
 
 At this point, the due date SQL is reused in 5 functions. I'm considering a shared view or constant to be used in each.
 
+*2026-11-04: Happy Birthday to my dad! <3 No work today.
+
 *2026-11-06: Moving on to the Excel phase, decided to use the `xlsxwriter` library, then created `requirements.txt` in the repo root to indicate that the project now depends on xlsxwriter.
 
 Next, [notebook 13](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/13-excel-smoke-test.ipynb) was created as a smoke test for xlsxwriter. 
@@ -529,6 +531,18 @@ The next step was `history_by_month`. The query was built in the prototype noteb
 
 Then the `write_history_by_month()` function was built in reports.py. It builds two columns, 'Month' and 'Services Completed', and a 'Total' row. The chart built is a simple column chart with the 'Total' row excluded. Just as with the other charts, the column widths are set, and the header row is frozen. There is no 'today' passed into the function, in line with the query function. [Notebook 16](https://github.com/alissamaharaj/due-diligence/blob/main/notebooks/16-excel-history-by-month.ipynb) was created and used to test the function, and the output sheet and chart were checked against the pivot table; all the outputs and the total matched the pivot table answer key.
 
-Hitches: The by-type template’s per-row `=B{i+1}` formula and its column `C SUM` were mistakenly copied in, even though this report has no Total Overdue column.
+Hitches: The by-type template’s per-row `=B{i+1}` formula and its column `C SUM` were mistakenly copied in, even though this report has no Total Overdue column. At this point, I realized that VSCode automatically added some unused import lines to my reports.py also 
+```
+from xlsxwriter import chart
+from xlsxwriter import worksheet
+from xlsxwriter import workbook
+```
+, so I removed them.
 
 Even though I said earlier that I might merge all the reports into one workbook, I decided against it since each writer function is already tested and committed, and since the `write_history_by_month` writer has a different signature than the others, I felt it would be cleaner to leave them separate as is.
+
+*2026-11-08: Happy Diwali and Happy Birthday to my mom! <3
+
+Decisions for today: I decided against the refactor to create a shared view for the due date query that exists in multiple functions. It was considered, but ultimately I decided not to do it to reduce the risk of breaking something in code that already works. I also decided to change the `history_by_month` chart from a column chart to a line chart to have some chart variety.
+
+At this point, all the main aspects of the project are completed, yay! So from here on are wrap-up steps. The next thing to be done is creating a simple text menu to tie the layers of the project together.
