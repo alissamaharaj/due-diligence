@@ -543,6 +543,14 @@ Even though I said earlier that I might merge all the reports into one workbook,
 
 *2026-11-08: Happy Diwali and Happy Birthday to my mom! <3
 
-Decisions for today: I decided against the refactor to create a shared view for the due date query that exists in multiple functions. It was considered, but ultimately I decided not to do it to reduce the risk of breaking something in code that already works. I also decided to change the `history_by_month` chart from a column chart to a line chart to have some chart variety.
+Decisions for today: I decided against the refactor to create a shared view for the due date query that exists in multiple functions. It was considered, but ultimately I decided not to do it to reduce the risk of breaking something in code that already works. I also decided to change the `history_by_month` chart from a column chart to a line chart to have some chart variety. I completed the simple change of chart type, added markers for the points on the line graph for visibility, and retested it using notebook 16.
 
 At this point, all the main aspects of the project are completed, yay! So from here on are wrap-up steps. The next thing to be done is creating a simple text menu to tie the layers of the project together.
+
+I started creating the skeleton of the menu by creating `src/main.py` and defining the ROOT path so that it can run from any folder. I decided on 9 menu options: generate, load, write reports, due next, due within, overdue, overdue by location, overdue by type, and quit. It uses a `while True` loop to print the menu options, then prompts for input; at this point, the options only use print placeholders to confirm loop functionality.
+
+Hitches: I copied over the path imports and definition lines from the previous files but left a wrong relative path line; then I removed the wrong line and kept the erroneous relative path when attempting to rectify the issue. I also had unnecessary `DATA_DIR` and `DB_PATH` lines left over from where the imports were copied. I mistakenly used 'if' statements instead of 'elif' statements for the printing lines for each option, causing only the last 'if' to have an 'else', which caused every choice to default to the 'else' after it ran instead of having one long 'if', 'elif', 'else' chain.
+
+The loop was tested using a valid number, a bad number, an empty Enter, and the quit command, and all these passed as expected.
+
+*2026-11-09: 
