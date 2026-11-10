@@ -9,7 +9,7 @@ sys.path.append(str(SRC_DIR))
 from storage import DB_PATH, load_database, get_conn
 from generator import generate_all, OUT_DIR
 from reports import write_overdue_by_location, write_overdue_by_type, write_history_by_month, REPORT_DIR
-from queries import due_next, due_within, overdue_procedures
+from queries import due_next, due_within, overdue_procedures, overdue_by_location, overdue_by_type
 
 def show_menu():
     print('''
@@ -71,9 +71,10 @@ def main():
                 rows = due_next(conn, n)
                 conn.close()
                 if not rows:
-                    print("No procedures due in that window.")
-                for procedure_id, last_done, next_due in rows:
-                    print(f"Procedure ID: {procedure_id}, Last Done: {last_done or 'never serviced'}, Next Due: {next_due}")
+                    print("No procedures due.")
+                else:
+                    for procedure_id, last_done, next_due in rows:
+                        print(f"Procedure ID: {procedure_id}, Last Done: {last_done or 'never serviced'}, Next Due: {next_due}")
         elif choice == '5':
             print("Due within...")
             if not DB_PATH.exists(): print(f"No database found at {DB_PATH}. Please load the database first (Option 2).")
@@ -84,11 +85,10 @@ def main():
                     print("No start date provided. Defaulting to today:", start_date)
                 else:
                     try:
-                        datetime.strptime(rawstrt, '%Y-%m-%d')
+                        start_date = datetime.strptime(rawstrt, '%Y-%m-%d').strftime('%Y-%m-%d')
                     except ValueError:
                         print("Invalid date format. Please enter a valid date in YYYY-MM-DD format.")
                         continue
-                    start_date = rawstrt
                 rawwnd = input('How many days? ').strip()
                 try:
                     days = int(rawwnd)
@@ -122,8 +122,30 @@ def main():
                         print(f"Procedure ID: {procedure_id}, Last Done: {last_done or 'never serviced'}, Next Due: {next_due}")
         elif choice == '7':
             print("Overdue by Location...")
+            if not DB_PATH.exists(): print(f"No database found at {DB_PATH}. Please load the database first (Option 2).")
+            else:
+                conn = get_conn()
+                today = datetime.now().strftime('%Y-%m-%d')
+                rows = overdue_by_location(conn, today)
+                conn.close()
+                if not rows:
+                    print("No overdue procedures.")
+                else:
+                    for location, with_history, never_serviced in rows:
+                        print(f"Location: {location}, With History: {with_history}, Never Serviced: {never_serviced}")
         elif choice == '8':
             print("Overdue by Asset Type...")
+            if not DB_PATH.exists(): print(f"No database found at {DB_PATH}. Please load the database first (Option 2).")
+            else:
+                conn = get_conn()
+                today = datetime.now().strftime('%Y-%m-%d')
+                rows = overdue_by_type(conn, today)
+                conn.close()
+                if not rows:
+                    print("No overdue procedures.")
+                else:
+                    for asset_type, with_history, never_serviced in rows:
+                        print(f"Asset Type: {asset_type}, With History: {with_history}, Never Serviced: {never_serviced}")
         else:
             print("Invalid choice. Please try again.")
 
