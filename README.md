@@ -58,7 +58,7 @@ flowchart LR
 - Source data lives in four tables (`Assets`, `Procedures`, `Frequencies`, `Service_History`). Service frequency is stored as text, and a small lookup table converts it to an interval in days.
 - Loaders read each CSV, check every row, and return a list of good rows and a list of rejected rows with row numbers and reasons. `load_all()` chains them together because each loader depends on the output of the previous one.
 - The core query joins procedures to their last completed date and calculates the next due date. `LEFT JOIN` keeps procedures with no history, and `COALESCE` falls back to the commissioning date.
-- Every other date-based query (`due_next`, `due_within`, `overdue_procedures`, `overdue_by_location`, `overdue_by_type`) wraps this one, so the due-date rule is defined in a single place of logic.
+- Every other date-based query (`due_next`, `due_within`, `overdue_procedures`, `overdue_by_location`, `overdue_by_type`) repeats the same due-date expression.
 - Reports use `xlsxwriter`, with `SUM` formulas built from the row count so totals stay correct if the data changes.
 
 ### Core Skills Demonstrated
@@ -74,7 +74,7 @@ flowchart LR
 
 ### Sample Output
 
-Option 4 (Due next) and option 7 (Overdue by Location):
+Option 4 (Due next) and option 7 (Overdue by Location), run on 2026-11-10:
 
 ```
 Due next...
@@ -115,9 +115,9 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
-Run the menu options in order the first time: **1** (generate data), **2** (load database), **3** (write reports). Options 4 to 8, then query the database.
+Run the menu options in order the first time: **1** (generate data), **2** (load database), **3** (write reports). Options 4 to 8 then query the database.
 
 **Notes on the data:**
 - The generator uses a fixed seed (42), so the same dataset is produced every time, but it uses the live date, so the dates shift and results change from day to day.
 - The `reports/` folder in this repo contains the workbooks verified on 2026-11-02. Running option 3 overwrites them with versions built on the current date.
-- The loaders are tested against small hand-made CSVs in `data/` that include deliberately bad rows. The generator itself produces clean rows only.
+- The loaders are tested against small hand-made CSVs in `data/` that include deliberately bad rows, using `tests/test_loaders.py`. The generator itself produces clean rows only.
