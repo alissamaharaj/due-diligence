@@ -580,3 +580,23 @@ At this point, I also realized that there was no feedback for empty rows, so I a
 Option 6 (overdue): This was a simple one. Database exists check; `conn` and `today` are defined and passed into the `overdue_procedures()` function call, the connection is closed, and the result is unpacked and printed.
 
 Hitch at option 6: Because this query returns a large dataset, I added a line printing the row count before unpacking and printing the results, but I mistakenly placed the count line inside the unpacking loop at first, fixed by moving it outside the loop.
+
+*2026-11-10: Finished up options 7 and 8, which were almost identical to option 6, with the exception of the count line.
+
+Option 7 (overdue by location): Database exists check; `conn` and `today` are defined and passed into the `overdue_by_location()` function call; the connection is closed, and the result is unpacked and printed.
+
+Option 8 (overdue by asset type): Database exists check; `conn` and `today` are defined and passed into the `overdue_by_type()` function call, the connection is closed, and the result is unpacked and printed.
+
+The outputs were checked against the total overdue procedures from option 6, which they matched.
+
+Hitch at this point: I realized that for option 4, the print line for empty rows referenced "window", which was leftover from copying over the print line from option 5, so I removed it at this stage.
+
+I also applied a date normalization in option 5 so that if an unpadded date (2026-1-5) is entered, the input is parsed and reformatted as a padded date (2026-01-05) using `.strftime('%Y-%m-%d')`.
+
+The hitch I encountered here: I altered the input branch instead of the typed-in date branch.
+
+With this step done, I officially have the project with just my README.md to do.
+
+Some reflections: This was the first full project of this length I've ever done, and doing it all on my own was an incredible learning experience for me. A lot of the concepts used here I did not explicitly learn in my Python course; I learnt things as they were required, and I realized that this style works very well for me. I love having something solid done at the end of a session.
+
+I'm very excited to continue on with my projects and continue learning and building more things.
