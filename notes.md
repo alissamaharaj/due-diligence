@@ -547,10 +547,36 @@ Decisions for today: I decided against the refactor to create a shared view for 
 
 At this point, all the main aspects of the project are completed, yay! So from here on are wrap-up steps. The next thing to be done is creating a simple text menu to tie the layers of the project together.
 
-I started creating the skeleton of the menu by creating `src/main.py` and defining the ROOT path so that it can run from any folder. I decided on 9 menu options: generate, load, write reports, due next, due within, overdue, overdue by location, overdue by type, and quit. It uses a `while True` loop to print the menu options, then prompts for input; at this point, the options only use print placeholders to confirm loop functionality.
+I started creating the skeleton of the menu by creating [src/main.py](https://github.com/alissamaharaj/due-diligence/blob/main/src/main.py) and defining the ROOT path so that it can run from any folder. I decided on 9 menu options: generate, load, write reports, due next, due within, overdue, overdue by location, overdue by type, and quit. It uses a `while True` loop to print the menu options, then prompts for input and filters for invalid inputs; at this point, the options only use print placeholders to confirm loop functionality.
 
 Hitches: I copied over the path imports and definition lines from the previous files but left a wrong relative path line; then I removed the wrong line and kept the erroneous relative path when attempting to rectify the issue. I also had unnecessary `DATA_DIR` and `DB_PATH` lines left over from where the imports were copied. I mistakenly used 'if' statements instead of 'elif' statements for the printing lines for each option, causing only the last 'if' to have an 'else', which caused every choice to default to the 'else' after it ran instead of having one long 'if', 'elif', 'else' chain.
 
 The loop was tested using a valid number, a bad number, an empty Enter, and the quit command, and all these passed as expected.
 
-*2026-11-09: 
+*2026-11-09: As committed, the [generator](https://github.com/alissamaharaj/due-diligence/blob/main/src/generator.py) only ran its subfunctions inside a `if __name__ == '__main__'` block, so I modified the file by building a `generate_all()` function, moving all the subfunction calls into it, and then only called `generate_all` inside the `__name__` block. I retested the generator in the terminal and notebook 11 to confirm this modification didn't break anything; the output was as expected.
+
+`generate_all` was imported into main.py and called in the 'if' block for option 1. This option generates all the data .csvs, then prints a line giving the location where the generated data was deposited, OUT_DIR. The fixed seed (42) for the generator means the same dataset is always regenerated, with only the dates shifting.
+
+Then, for option 2 (load database), the 'elif' branch checks that the generated assets.csv exists in OUT_DIR, then calls `load_database` from storage.py
+
+Hitch at option 2: I tried to pass `get_conn()`, which is an open connection, into the load_database function, which takes a path; DB_PATH was needed there instead.
+
+Important point to note: running options 1 and 2 replaced the dataset that the notebook answer keys were built on. Notebook 12’s hard-coded expectations (89 overdue on 2026-11-02, the location and type breakdowns) no longer match the current database, and the old CSVs can’t be regenerated exactly because `generate_all` uses the live date. Also, the menu’s reports use the live date, so their numbers differ from the committed '2026-11-02' workbooks.
+
+I ran `git restore reports/` to keep the verified workbooks instead of committing the live-date ones.
+
+For option 3 (write reports), the same type of `exist` check is used to ensure the database exists; then `conn` and `today` are defined, and all three report-writing functions are called before the connection is closed.
+
+I tested the checks by removing the existing generated files and database and then running menu options 3 and then 2 to confirm they return that the relevant files aren't found; then I ran them in order 1, 2, and 3 and confirmed that the row totals were consistent.
+
+Option 4 (due next): the same database exists check is used; then it prompts for user input of the number of procedures that are due next that you want returned, and filters for invalid inputs. `conn` is defined and the `due_next` query function is called, passing in the connection and the number of procedures entered, then unpacks and prints the results before closing the connection. I tested the invalid input checks by passing varying bad inputs: 0, a negative value, and a random string.
+
+Option 5 (due within): database exists check, prompts user for a start date for the window, defaulting to 'today' if you press the `Enter` key, filters for invalid inputs, prompts user again for the number of days for the window, and again filters for invalid inputs. `conn` is defined and the `due_within` query function is called, passing in the connection, the start date, and the number of days for the window, then unpacks and prints the results before closing the connection.
+
+Hitches at option 5: I wanted empty start date inputs to default to 'today', but the block I wrote initially had a `continue` after the default, which bypassed the default. I fixed it by splitting the cases so empty inputs default to 'today' and non-empty invalid inputs are rejected. The dates were passed as `datetime` objects, but the default path passes them as strings, so they were validated with strptime, results were discarded, and the original YYYY-MM-DD string was passed so both paths give a string. I initially put the input prompts before the input filters, so even if a bad input was entered in the first instance, it was only rejected after the second input was given, so I moved the filters to right after their respective input prompts. 
+
+At this point, I also realized that there was no feedback for empty rows, so I added `if not rows/else` lines to options 4 and 5 and modified the print lines to print "never serviced" for 'None' last done dates.
+
+Option 6 (overdue): This was a simple one. Database exists check; `conn` and `today` are defined and passed into the `overdue_procedures()` function call, the connection is closed, and the result is unpacked and printed.
+
+Hitch at option 6: Because this query returns a large dataset, I added a line printing the row count before unpacking and printing the results, but I mistakenly placed the count line inside the unpacking loop at first, fixed by moving it outside the loop.
