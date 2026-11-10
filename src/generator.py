@@ -130,7 +130,13 @@ def generate_service_history(rng, today, assets, procedures):
 
     return history
 
-if __name__ == '__main__':
+def generate_all():
+    """Generate assets, procedures and service history, and write the three CSVs.
+
+    Takes no arguments. Writes assets.csv, procedures.csv and service_history.csv
+    to OUT_DIR. Returns nothing. Uses a fixed random seed for reproducibility.
+    """
+
     rng = random.Random(42)
     today = datetime.now()
     assets = generate_assets(rng, today)
@@ -142,3 +148,6 @@ if __name__ == '__main__':
     history = generate_service_history(rng, today, assets, procedures)
     write_csv(OUT_DIR / 'service_history.csv', history, serv_hist_fields)
     print(f'wrote {len(history)} history rows')
+
+if __name__ == '__main__':
+    generate_all()
