@@ -600,3 +600,5 @@ With this step done, I officially have the project with just my README.md to do.
 Some reflections: This was the first full project of this length I've ever done, and doing it all on my own was an incredible learning experience for me. A lot of the concepts used here I did not explicitly learn in my Python course; I learnt things as they were required, and I realized that this style works very well for me. I love having something solid done at the end of a session.
 
 I'm very excited to continue on with my projects and continue learning and building more things.
+
+**END**
